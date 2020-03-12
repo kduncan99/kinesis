@@ -1,27 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e737fa62-57f2-4235-8005-758a15cf9180" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/org_apache_logging_log4j_log4j_1_2_api_2_13_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/org_apache_logging_log4j_log4j_core_2_13_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/org_junit_jupiter_junit_jupiter_api_5_6_0.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/org_postgresql_postgresql_42_2_10.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/kinesis.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/KinesisDatabase.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/BadParameterException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/KinesisException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/NoSuchPathException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/KinesisDatabaseTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/SectorTest.java" afterDir="false" />
+    <list default="true" id="e737fa62-57f2-4235-8005-758a15cf9180" name="Default Changelist" comment="Chopping wood - found a much MUCH more performant means of creating clusters.">
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/GroupCluster.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/SpokeCluster.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/TraditionalCluster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/SectorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/ClusterTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,10 +53,11 @@
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.3321839" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="editor.preferences.folding" />
   </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.kadware.kinesis.entities" />
       <recent name="com.kadware.kinesis.exceptions" />
       <recent name="com.kadware.kinesis.database" />
     </key>
@@ -77,7 +65,23 @@
       <recent name="C:\Users\kduncan\Projects\kinesis\src\main\java" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.SectorTest.testMap">
+  <component name="RunManager" selected="JUnit.ClusterTest.testMap">
+    <configuration name="ClusterTest.testMap" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="kinesis" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.kadware.kinesis.entities.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.kadware.kinesis.entities" />
+      <option name="MAIN_CLASS_NAME" value="com.kadware.kinesis.entities.ClusterTest" />
+      <option name="METHOD_NAME" value="testMap" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="KinesisDatabaseTest.testClear" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="kinesis" />
       <extension name="coverage">
@@ -110,25 +114,9 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="SectorTest.testMap" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="kinesis" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.kadware.kinesis.entities.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.kadware.kinesis.entities" />
-      <option name="MAIN_CLASS_NAME" value="com.kadware.kinesis.entities.SectorTest" />
-      <option name="METHOD_NAME" value="testMap" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.SectorTest.testMap" />
+        <item itemvalue="JUnit.ClusterTest.testMap" />
         <item itemvalue="JUnit.KinesisDatabaseTest.testInit" />
         <item itemvalue="JUnit.KinesisDatabaseTest.testClear" />
       </list>
@@ -148,11 +136,17 @@
       <workItem from="1582485744446" duration="254000" />
       <workItem from="1582486080413" duration="487000" />
       <workItem from="1582486907143" duration="9969000" />
+      <workItem from="1583980410091" duration="2963000" />
+      <workItem from="1584035956254" duration="6126000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Chopping wood - found a much MUCH more performant means of creating clusters." />
+    <option name="LAST_COMMIT_MESSAGE" value="Chopping wood - found a much MUCH more performant means of creating clusters." />
   </component>
   <component name="WindowStateProjectService">
     <state x="-1920" y="0" key="#Notifications" timestamp="1582485775714">
@@ -163,55 +157,69 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="689" y="49" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582489445352" />
+    <state x="404" y="141" key="CommitChangelistDialog2" timestamp="1584043945543">
+      <screen x="0" y="23" width="1920" height="1126" />
+    </state>
+    <state x="404" y="141" key="CommitChangelistDialog2/0.23.1920.1126@0.23.1920.1126" timestamp="1584043945543" />
     <state x="-1920" y="0" key="FileChooserDialogImpl" timestamp="1582486206501">
       <screen x="-1920" y="0" width="1920" height="1040" />
     </state>
     <state x="-1920" y="0" key="FileChooserDialogImpl/-1920.0.1920.1040/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1582486206501" />
-    <state width="1581" height="331" key="GridCell.Tab.0.bottom" timestamp="1582496605289">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.0.bottom" timestamp="1584043997924">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.bottom/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1581" height="331" key="GridCell.Tab.0.center" timestamp="1582496605289">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.0.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
+    <state width="1558" height="334" key="GridCell.Tab.0.center" timestamp="1584043997924">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.center/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1581" height="331" key="GridCell.Tab.0.left" timestamp="1582496605289">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.0.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
+    <state width="1558" height="334" key="GridCell.Tab.0.left" timestamp="1584043997923">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.left/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1581" height="331" key="GridCell.Tab.0.right" timestamp="1582496605289">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.0.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997923" />
+    <state width="1558" height="334" key="GridCell.Tab.0.right" timestamp="1584043997924">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.right/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1581" height="328" key="GridCell.Tab.1.bottom" timestamp="1582496421319">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.0.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
+    <state width="1558" height="334" key="GridCell.Tab.1.bottom" timestamp="1584043997926">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.bottom/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421319" />
-    <state width="1581" height="328" key="GridCell.Tab.1.center" timestamp="1582496421318">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.1.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997926" />
+    <state width="1558" height="334" key="GridCell.Tab.1.center" timestamp="1584043997925">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.center/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state width="1581" height="328" key="GridCell.Tab.1.left" timestamp="1582496421318">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.1.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997925" />
+    <state width="1558" height="334" key="GridCell.Tab.1.left" timestamp="1584043997925">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.left/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state width="1581" height="328" key="GridCell.Tab.1.right" timestamp="1582496421318">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.1.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997925" />
+    <state width="1558" height="334" key="GridCell.Tab.1.right" timestamp="1584043997926">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.right/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state x="440" y="119" width="1239" height="708" key="SettingsEditor" timestamp="1582489411591">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state width="1558" height="334" key="GridCell.Tab.1.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997926" />
+    <state x="440" y="152" width="1239" height="708" key="SettingsEditor" timestamp="1584042370070">
+      <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state x="-1920" y="0" width="1239" height="708" key="SettingsEditor/-1920.0.1920.1040/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1582487257610" />
     <state x="440" y="119" key="SettingsEditor/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582489411591" />
+    <state x="440" y="152" key="SettingsEditor/0.23.1920.1126@0.23.1920.1126" timestamp="1584042370070" />
     <state x="665" y="443" width="591" height="560" key="com.intellij.jarRepository.RepositoryAttachDialog-DOWNLOAD" timestamp="1582488606701">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="336" y="346" width="591" height="560" key="com.intellij.jarRepository.RepositoryAttachDialog-DOWNLOAD/-1920.0.1920.1040/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1582486440722" />
     <state x="665" y="443" key="com.intellij.jarRepository.RepositoryAttachDialog-DOWNLOAD/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582488606701" />
-    <state x="654" y="241" width="672" height="678" key="search.everywhere.popup" timestamp="1582496445926">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state x="654" y="284" width="672" height="734" key="search.everywhere.popup" timestamp="1584037498252">
+      <screen x="0" y="23" width="1920" height="1125" />
     </state>
     <state x="654" y="241" width="672" height="678" key="search.everywhere.popup/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496445926" />
+    <state x="654" y="284" width="672" height="734" key="search.everywhere.popup/0.23.1920.1125@0.23.1920.1125" timestamp="1584037498252" />
   </component>
 </project>
