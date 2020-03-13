@@ -24,12 +24,13 @@ public class SpokeCluster extends Cluster {
 
     public static final Logger _logger = LogManager.getLogger("SpokeCluster");
 
+    public static final int MAX_LINKS = 6;
+
     private SpokeCluster(
         final int identifier,
-        final String name,
-        final Map<Integer, Sector> map
+        final String name
     ) {
-        super(identifier, name, map);
+        super(identifier, name, MAX_LINKS);
     }
 
     public static SpokeCluster createCluster(

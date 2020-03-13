@@ -2,13 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e737fa62-57f2-4235-8005-758a15cf9180" name="Default Changelist" comment="Chopping wood - found a much MUCH more performant means of creating clusters.">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/GroupCluster.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/SpokeCluster.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/TraditionalCluster.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/GroupCluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/GroupCluster.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/SectorTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/ClusterTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/SpokeCluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/SpokeCluster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/TraditionalCluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/TraditionalCluster.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -138,6 +138,7 @@
       <workItem from="1582486907143" duration="9969000" />
       <workItem from="1583980410091" duration="2963000" />
       <workItem from="1584035956254" duration="6126000" />
+      <workItem from="1584045573201" duration="13247000" />
     </task>
     <servers />
   </component>
@@ -165,46 +166,46 @@
       <screen x="-1920" y="0" width="1920" height="1040" />
     </state>
     <state x="-1920" y="0" key="FileChooserDialogImpl/-1920.0.1920.1040/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1582486206501" />
-    <state width="1558" height="334" key="GridCell.Tab.0.bottom" timestamp="1584043997924">
+    <state width="1558" height="334" key="GridCell.Tab.0.bottom" timestamp="1584059488394">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.bottom/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1558" height="334" key="GridCell.Tab.0.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
-    <state width="1558" height="334" key="GridCell.Tab.0.center" timestamp="1584043997924">
+    <state width="1558" height="334" key="GridCell.Tab.0.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488394" />
+    <state width="1558" height="334" key="GridCell.Tab.0.center" timestamp="1584059488393">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.center/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1558" height="334" key="GridCell.Tab.0.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
-    <state width="1558" height="334" key="GridCell.Tab.0.left" timestamp="1584043997923">
+    <state width="1558" height="334" key="GridCell.Tab.0.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488393" />
+    <state width="1558" height="334" key="GridCell.Tab.0.left" timestamp="1584059488393">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.left/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1558" height="334" key="GridCell.Tab.0.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997923" />
-    <state width="1558" height="334" key="GridCell.Tab.0.right" timestamp="1584043997924">
+    <state width="1558" height="334" key="GridCell.Tab.0.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488393" />
+    <state width="1558" height="334" key="GridCell.Tab.0.right" timestamp="1584059488394">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="331" key="GridCell.Tab.0.right/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496605289" />
-    <state width="1558" height="334" key="GridCell.Tab.0.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997924" />
-    <state width="1558" height="334" key="GridCell.Tab.1.bottom" timestamp="1584043997926">
+    <state width="1558" height="334" key="GridCell.Tab.0.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488394" />
+    <state width="1558" height="334" key="GridCell.Tab.1.bottom" timestamp="1584059488395">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.bottom/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421319" />
-    <state width="1558" height="334" key="GridCell.Tab.1.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997926" />
-    <state width="1558" height="334" key="GridCell.Tab.1.center" timestamp="1584043997925">
+    <state width="1558" height="334" key="GridCell.Tab.1.bottom/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488395" />
+    <state width="1558" height="334" key="GridCell.Tab.1.center" timestamp="1584059488395">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.center/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state width="1558" height="334" key="GridCell.Tab.1.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997925" />
-    <state width="1558" height="334" key="GridCell.Tab.1.left" timestamp="1584043997925">
+    <state width="1558" height="334" key="GridCell.Tab.1.center/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488395" />
+    <state width="1558" height="334" key="GridCell.Tab.1.left" timestamp="1584059488394">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.left/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state width="1558" height="334" key="GridCell.Tab.1.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997925" />
-    <state width="1558" height="334" key="GridCell.Tab.1.right" timestamp="1584043997926">
+    <state width="1558" height="334" key="GridCell.Tab.1.left/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488394" />
+    <state width="1558" height="334" key="GridCell.Tab.1.right" timestamp="1584059488395">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
     <state width="1581" height="328" key="GridCell.Tab.1.right/-1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1582496421318" />
-    <state width="1558" height="334" key="GridCell.Tab.1.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584043997926" />
+    <state width="1558" height="334" key="GridCell.Tab.1.right/0.23.1920.1126@0.23.1920.1126" timestamp="1584059488395" />
     <state x="440" y="152" width="1239" height="708" key="SettingsEditor" timestamp="1584042370070">
       <screen x="0" y="23" width="1920" height="1126" />
     </state>
