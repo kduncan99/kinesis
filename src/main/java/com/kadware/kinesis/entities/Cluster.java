@@ -16,19 +16,20 @@ import java.util.Map;
  */
 public abstract class Cluster {
 
-    private static final Logger LOGGER = LogManager.getLogger("Cluster");
-
     public enum Geometry {
         Traditional,
         Spoke,
         Grouped,
     }
 
-    public static final String SOURCE_TABLE = "Clusters";
+    private static final Logger LOGGER = LogManager.getLogger("Cluster");
+    private static int _nextIdentifier = 1;
+
     public final int _identifier;
     public final int _maxLinksPerSector;
     public final String _name;
     final Map<Integer, Sector> _sectorMap = new HashMap<>();
+    //  TODO government / military
 
     Cluster(
         final int identifier,
@@ -41,6 +42,10 @@ public abstract class Cluster {
     }
 
     public abstract Geometry getGeometry();
+
+    public static synchronized int getNextIdentifier() {
+        return _nextIdentifier++;
+    }
 
     boolean createSectorLink(
         final int sectorId1,
@@ -65,13 +70,13 @@ public abstract class Cluster {
     ) {
         if ((sector1._links.size() == _maxLinksPerSector)
             || (sector2._links.size() == _maxLinksPerSector)
-            || sector1._links.contains(sector2._identifier)
-            || sector2._links.contains(sector1._identifier)
-            || (sector1._identifier == sector2._identifier)) {
+            || sector1._links.contains(sector2._sectorNumber)
+            || sector2._links.contains(sector1._sectorNumber)
+            || (sector1._sectorNumber == sector2._sectorNumber)) {
             return false;
         } else {
-            sector1._links.add(sector2._identifier);
-            sector2._links.add(sector1._identifier);
+            sector1._links.add(sector2._sectorNumber);
+            sector2._links.add(sector1._sectorNumber);
             return true;
         }
     }
@@ -79,7 +84,7 @@ public abstract class Cluster {
     void traceSectorLinks() {
         for (Sector sector : _sectorMap.values()) {
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format("%d:", sector._identifier));
+            sb.append(String.format("%d:", sector._sectorNumber));
             for (int link : sector._links) {
                 sb.append(String.format(" %d", link));
             }

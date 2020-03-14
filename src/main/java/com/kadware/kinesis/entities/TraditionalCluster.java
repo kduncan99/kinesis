@@ -94,7 +94,7 @@ public class TraditionalCluster extends Cluster {
                     for (int destSectorId : sector._links) {
                         Sector destSector = _sectorMap.get(destSectorId);
                         if (destSector._pathToCenter != null) {
-                            if (!destSector._pathToCenter.contains(sector._identifier)) {
+                            if (!destSector._pathToCenter.contains(sector._sectorNumber)) {
                                 if (shortestPath == null) {
                                     shortestPath = destSector._pathToCenter;
                                     shortestPathDestSectorId = destSectorId;
@@ -122,8 +122,8 @@ public class TraditionalCluster extends Cluster {
         System.out.println("Fixing long paths...");//TODO remove
         for (Sector sector : _sectorMap.values()) {
             if ((sector._pathToCenter.size() > _maxPath) && (sector._links.size() < _maxLinksPerSector)) {
-                LOGGER.trace(String.format("Creating warp from sector %d to sector 1", sector._identifier));
-                System.out.println(String.format("Creating warp from sector %d to sector 1", sector._identifier));//TODO remove
+                LOGGER.trace(String.format("Creating warp from sector %d to sector 1", sector._sectorNumber));
+                System.out.println(String.format("Creating warp from sector %d to sector 1", sector._sectorNumber));//TODO remove
                 sector._links.add(1);
                 createSectorPathsToCenter();
             }
@@ -138,7 +138,7 @@ public class TraditionalCluster extends Cluster {
         LOGGER.trace("Fixing orphaned sectors...");
         System.out.println("Fixing orphaned sectors...");//TODO remove
         for (Sector sector : _sectorMap.values()) {
-            if ((sector._identifier > 2)
+            if ((sector._sectorNumber > 2)
                     && (sector._pathToCenter == null)
                     && (sector._links.size() < MAX_LINKS)) {
                 int destSectorId = RANDOM.nextInt(_sectorCount) + 1;
@@ -151,10 +151,10 @@ public class TraditionalCluster extends Cluster {
                 }
 
                 LOGGER.trace(String.format("Added links between orphan sector %d and sector %d",
-                                           sector._identifier,
+                                           sector._sectorNumber,
                                            destSectorId));
                 System.out.println(String.format("Added links between orphan sector %d and sector %d",
-                                                 sector._identifier,
+                                                 sector._sectorNumber,
                                                  destSectorId)); // TODO remove
 
                 createSectorPathsToCenter();
@@ -179,15 +179,14 @@ public class TraditionalCluster extends Cluster {
             throw new BadParameterException(String.format("Illegal number of sectors:%d", sectorCount));
         }
 
-        int identifier = 1; // TODO make this unique
+        int clusterIdentifier = getNextIdentifier();
         int maxPath = (int)(sectorCount * MAX_PATH_SLOPE);
-        TraditionalCluster cluster = new TraditionalCluster(identifier, name, sectorCount, maxPath);
-
+        TraditionalCluster cluster = new TraditionalCluster(clusterIdentifier, name, sectorCount, maxPath);
 
         LOGGER.trace(String.format("Creating %d sectors...", sectorCount));
         cluster._sectorMap.clear();
         for (int sectorId = 1; sectorId <= sectorCount; ++sectorId) {
-            cluster._sectorMap.put(sectorId, new Sector(sectorId));
+            cluster._sectorMap.put(sectorId, new Sector(Sector.getNextIdentifier(), clusterIdentifier, sectorId));
         }
 
         cluster.createSectorLinks();
