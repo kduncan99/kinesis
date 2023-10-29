@@ -3,23 +3,27 @@
  * Copyright (c) 2020,2023 by Kurt Duncan - All Rights Reserved
  */
 
-package com.bearsnake.kinesis.lib;
+package com.bearsnake.kinesis.entities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Represents a planet within our universe.
- * A planet is located at a specific sector within a specific cluster
+ * Represents a port within our universe.
+ * A port is located at a specific sector within a specific cluster - somewhere a little bit away from a planet
  */
-public class Planet {
+public class Port {
 
-    private static final Logger LOGGER = LogManager.getLogger("Planet");
+    public static class PortId {
+
+    }
+
+    private static final Logger LOGGER = LogManager.getLogger("Port");
 
     public final int _identifier;
     public final String _name;
 
-    public Planet(
+    public Port(
         final int identifier,
         final String name
     ) {

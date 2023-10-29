@@ -3,13 +3,20 @@
  * Copyright (c) 2020,2023 by Kurt Duncan - All Rights Reserved
  */
 
-package com.bearsnake.kinesis.lib;
+package com.bearsnake.kinesis.entities;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * Represents a cluster of sectors
@@ -18,36 +25,47 @@ public class Cluster {
 
     private static final int LONGEST_PATH_TO_HOME = 20;
     private static final Logger LOGGER = LogManager.getLogger("Cluster");
+    private static final Map<ClusterId, Cluster> _inventory = new HashMap<>();
 
-    public final int _identifier;
+    public final ClusterId _clusterId;
     public final String _name;
-    final Map<Integer, Sector> _sectorMap = new HashMap<>(); // key is sector number, unique to this map
+    final Set<SectorId> _sectors = new HashSet<>();
 
     private Cluster(
-        final int identifier,
         final String name,
         final int sectorCount
     ) {
-        _identifier = identifier;
+        ClusterId cid = new ClusterId(1);
+        while (_inventory.containsKey(cid)) {
+            cid = cid.next();
+        }
+
+        _clusterId = cid;
         _name = name;
-        IntStream.rangeClosed(1, sectorCount).forEach(sn -> _sectorMap.put(sn, new Sector(sn)));
+        for (int sectorNum = 1; sectorNum <= sectorCount; sectorNum++) {
+            var s = Sector.createNewSector(cid, sectorNum);
+            _sectors.add(s.getSectorId());
+        }
     }
 
-    public static Cluster createCluster(
-        final int identifier,
+    public static Cluster createStandardCluster(
         final String name,
         final int sectorCount
     ) {
-        LOGGER.trace("Creating cluster id={} name={} sectors={}", identifier, name, sectorCount);
+        LOGGER.trace("Creating standard cluster name={} sectors={}", name, sectorCount);
+
+        if ((sectorCount < 100) || (sectorCount > 10000)) {
+            throw new RuntimeException("Invalid sector count");
+        }
 
         var random = new Random(System.currentTimeMillis());
-        var cluster = new Cluster(identifier, name, sectorCount);
+        var cluster = new Cluster(name, sectorCount);
 
         // establish initial random links between sectors
         var lowLimit = 1;
-        var highLimit = cluster._sectorMap.size();
-        for (var thisSector : cluster._sectorMap.values()) {
-            var thisSectorNumber = thisSector.getSectorNumber();
+        var highLimit = cluster._sectors.size();
+        for (var thisSid : cluster._sectors) {
+            var thisSectorNumber = thisSid.getSectorNumber();
             var targetSectorNumber = thisSectorNumber + random.nextInt(21) - 10;
             while ((targetSectorNumber == thisSectorNumber)
                 || (targetSectorNumber < lowLimit)
@@ -55,84 +73,80 @@ public class Cluster {
                 targetSectorNumber = thisSectorNumber + random.nextInt(21) - 10;
             }
 
-            var targetSector = cluster._sectorMap.get(targetSectorNumber);
-            cluster.link(thisSector, targetSector);
+            var targetSid = new SectorId(cluster._clusterId, targetSectorNumber);
+            Sector.createBidirectionalLink(thisSid, targetSid);
         }
 
         // Make sure sector 1 has at least 5 links. That is an arbitrary, but probably good number
-        var firstSector = cluster._sectorMap.get(1);
+        var firstSectorId = new SectorId(cluster._clusterId, 1);
+        var firstSector = Sector.getSector(firstSectorId);
         while (firstSector.getLinkCount() < 5) {
-            var sn = random.nextInt(10) + 2; // sector number ranges from 2 to 11
-            var target = cluster._sectorMap.get(sn);
-            cluster.link(firstSector, target);
+            var targetSectorNum = random.nextInt(10) + 2; // sector number ranges from 2 to 11
+            var targetSid = new SectorId(cluster._clusterId, targetSectorNum);
+            Sector.createBidirectionalLink(firstSectorId, targetSid);
         }
 
         // Create an initial group of interconnected sectors, which includes sector 1.
-        var group = new HashSet<Sector>();
-        cluster.collectRelatedSectors(group, firstSector);
+        var group = new HashSet<SectorId>();
+        cluster.collectRelatedSectors(group, firstSectorId);
 
         // Now find any orphaned sectors and link them into the main group.
         // We do this by checking the existing sectors, and if we find one which is not in the main group,
         // we create an orphan group for the orphan (which may include many other orphaned sectors as well),
         // we link the original orphan to a sector in the main group, then add all the orphan sectors to
         // the main group... then continue iterating over the sectors until done.
-        for (var thisSector : cluster._sectorMap.values()) {
-            if (!group.contains(thisSector)) {
-                var orphans = new HashSet<Sector>();
-                cluster.collectRelatedSectors(orphans, thisSector);
+        for (var thisSectorId : cluster._sectors) {
+            if (!group.contains(thisSectorId)) {
+                var orphans = new HashSet<SectorId>();
+                cluster.collectRelatedSectors(orphans, thisSectorId);
 
                 // choose a sector from the main group at random
-                var sn = random.nextInt(sectorCount) + 1;
-                while ((sn < 2) || (!group.contains(cluster._sectorMap.get(sn)))) {
-                    sn = random.nextInt(sectorCount) + 1;
+                var targetSectorNumber = random.nextInt(sectorCount) + 1;
+                var targetSectorId = new SectorId(cluster._clusterId, targetSectorNumber);
+                while ((targetSectorNumber < 2) || !group.contains(targetSectorId)) {
+                    targetSectorNumber = random.nextInt(sectorCount) + 1;
+                    targetSectorId = new SectorId(cluster._clusterId, targetSectorNumber);
                 }
 
-                var target = cluster._sectorMap.get(sn);
-                cluster.link(thisSector, target);
+                Sector.createBidirectionalLink(thisSectorId, targetSectorId);
                 group.addAll(orphans);
             }
         }
 
         // Now there are no orphans. But there might be sectors which are too far from sector 1.
         // Any such sector gets a one-way link back to sector 1.
-        for (var thisSector : cluster._sectorMap.values()) {
-            if (!thisSector.equals(firstSector)) {
-                var path = cluster.getShortestPath(thisSector, firstSector);
+        for (var thisSectorId : cluster._sectors) {
+            if (!thisSectorId.equals(firstSectorId)) {
+                var path = cluster.getShortestPath(thisSectorId, firstSectorId);
                 if (path.size() > LONGEST_PATH_TO_HOME) {
-                    thisSector.createLinkTo(firstSector);
+                    Sector.getSector(thisSectorId).createLinkTo(firstSectorId);
                 }
             }
         }
 
+        _inventory.put(cluster._clusterId, cluster);
         return cluster;
     }
 
     /**
-     * Creates a collection of sectors which are connected to each other, starting with one sector.
+     * Creates a collection of sectorIds for sectors which are connected to each other,
+     * starting with one particular sector.
      */
     private void collectRelatedSectors(
-        final HashSet<Sector> set,
-        final Sector start
+        final HashSet<SectorId> set,
+        final SectorId initialSid
     ) {
-        if (!set.contains(start)) {
-            set.add(start);
-            for (var linkedSector : start.getLinks()) {
-                collectRelatedSectors(set, linkedSector);
+        if (!set.contains(initialSid)) {
+            set.add(initialSid);
+            for (var linkedSectorId : Sector.getSector(initialSid).getLinks()) {
+                collectRelatedSectors(set, linkedSectorId);
             }
         }
     }
 
-    private void link(
-        final Sector sector1,
-        final Sector sector2
-    ) {
-        sector1.createLinkTo(sector2);
-        sector2.createLinkTo(sector1);
-    }
-
-    public List<Sector> getShortestPath(
-        final Sector start,
-        final Sector goal
+    public List<SectorId> getShortestPath(
+        final SectorId start,
+        final SectorId goal
     ) {
         return getShortestPath(start, goal, Collections.emptyList());
     }
@@ -147,10 +161,10 @@ public class Cluster {
      * If there is no path from the starting sector to the ending sector (which can happen with a non-empty avoid list)
      * the result is null.
      */
-    public LinkedList<Sector> getShortestPath(
-        final Sector start,
-        final Sector goal,
-        final Collection<Sector> avoid
+    public LinkedList<SectorId> getShortestPath(
+        final SectorId start,
+        final SectorId goal,
+        final Collection<SectorId> avoid
     ) {
         if (avoid.contains(goal)) {
             return null;
@@ -160,15 +174,15 @@ public class Cluster {
             return new LinkedList<>();
         }
 
-        var links = start.getLinks();
+        var links = Sector.getSector(start).getLinks();
         if (links.contains(goal)) {
-            var result = new LinkedList<Sector>();
+            var result = new LinkedList<SectorId>();
             result.add(goal);
             return result;
         }
 
         var subAvoid = new LinkedList<>(avoid);
-        LinkedList<Sector> subPath = null;
+        LinkedList<SectorId> subPath = null;
         subAvoid.add(start);
         for (var link : links) {
             if (!avoid.contains(link)) {
@@ -186,10 +200,10 @@ public class Cluster {
     }
 
     public void showGeometry() {
-        for (var sector : _sectorMap.values()) {
+        for (var sectorId : _sectors) {
             var sb = new StringBuilder();
-            sb.append(sector.getSectorNumber()).append(":").append(" ");
-            for (var link : sector.getLinks()) {
+            sb.append(sectorId.getSectorNumber()).append(":").append(" ");
+            for (var link : Sector.getSector(sectorId).getLinks()) {
                 sb.append(" ").append(link.getSectorNumber());
             }
 
