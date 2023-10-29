@@ -5,34 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e737fa62-57f2-4235-8005-758a15cf9180" name="Default Changelist" comment="Chopping wood - found a much MUCH more performant means of creating clusters.">
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/komando.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Cluster.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Initializer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Kinesis.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Player.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/ResourceType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Server.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Ship.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/entities/ClusterTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/openjfx_javafx_base.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/openjfx_javafx_controls.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/openjfx_javafx_graphics.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kinesis.iml" beforeDir="false" afterPath="$PROJECT_DIR$/kinesis.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/KinesisDatabase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Database.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/City.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Cluster.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/GroupCluster.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Person.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Planet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Planet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Port.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Port.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/Sector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Sector.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/SpokeCluster.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/entities/TraditionalCluster.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/BadParameterException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/exceptions/BadParameterException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/KinesisException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/exceptions/KinesisException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/kadware/kinesis/exceptions/NoSuchPathException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/exceptions/NoSuchPathException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/KinesisDatabaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/DatabaseTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/kadware/kinesis/entities/ClusterTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Cluster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Cluster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Database.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Planet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Planet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Player.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Player.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Port.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Port.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/ResourceType.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/ResourceType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Sector.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Sector.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/Ship.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/bearsnake/kinesis/lib/Ship.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/DatabaseTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/DatabaseTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/entities/ClusterTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/bearsnake/kinesis/entities/ClusterTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +55,10 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Downloaded.Files.Path.Enabled": "true",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
@@ -99,9 +91,29 @@
       <recent name="com.kadware.kinesis.database" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Initializer">
+  <component name="RunManager" selected="Application.com.bearsnake.kinesis.Client">
+    <configuration name="Client" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="Client" />
+      <module name="kinesis" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Initializer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.bearsnake.kinesis.Initializer" />
+      <module name="kinesis" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.bearsnake.kinesis.lib.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="com.bearsnake.kinesis.Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.bearsnake.kinesis.Client" />
       <module name="kinesis" />
       <extension name="coverage">
         <pattern>
@@ -161,8 +173,17 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Application.Client" />
+      <item itemvalue="Application.com.bearsnake.kinesis.Client" />
+      <item itemvalue="Application.Initializer" />
+      <item itemvalue="JUnit.ClusterTest.testMap" />
+      <item itemvalue="JUnit.KinesisDatabaseTest.testClear" />
+      <item itemvalue="JUnit.KinesisDatabaseTest.testInit" />
+    </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.com.bearsnake.kinesis.Client" />
         <item itemvalue="Application.Initializer" />
         <item itemvalue="JUnit.ClusterTest.testMap" />
         <item itemvalue="JUnit.KinesisDatabaseTest.testInit" />
@@ -188,7 +209,7 @@
       <workItem from="1583980410091" duration="2963000" />
       <workItem from="1584035956254" duration="6126000" />
       <workItem from="1584045573201" duration="13247000" />
-      <workItem from="1698521062406" duration="15440000" />
+      <workItem from="1698521062406" duration="18682000" />
     </task>
     <servers />
   </component>
