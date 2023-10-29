@@ -3,17 +3,17 @@
  * Copyright (c) 2020 by Kurt Duncan - All Rights Reserved
  */
 
-package com.kadware.kinesis;
+package com.bearsnake.kinesis;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.*;
 
-public class KinesisDatabase {
+public class Database {
 
     public static final String SCHEMA_NAME = "Kinesis";
-    public static final Logger _logger = LogManager.getLogger("KinesisDatabase");
+    public static final Logger _logger = LogManager.getLogger("Database");
 
     private static final String TABLE_NAME_CLUSTERS = SCHEMA_NAME + ".Clusters";
     private static final String TABLE_NAME_SECTORS = SCHEMA_NAME + ".Sectors";
@@ -40,7 +40,7 @@ public class KinesisDatabase {
             "FOREIGN KEY (sourceSectorId) REFERENCES " + TABLE_NAME_SECTORS + " (id)," +
             "FOREIGN KEY (destinationSectorId) REFERENCES " + TABLE_NAME_SECTORS + " (id))";
 
-    private static final String[] _createStrings = {
+    private static final String[] _creationStrings = {
         CREATE_CLUSTERS,
         CREATE_SECTORS,
         CREATE_SECTOR_LINKS
@@ -53,7 +53,7 @@ public class KinesisDatabase {
     private final String _password;
     private final String _connectionString;
 
-    public KinesisDatabase(
+    public Database(
         final String hostName,
         final int port,
         final String databaseName,
@@ -85,7 +85,7 @@ public class KinesisDatabase {
         try (Connection cxn = DriverManager.getConnection(_connectionString, _username, _password);
              Statement statement = cxn.createStatement()) {
             statement.executeUpdate(String.format("CREATE SCHEMA %s", SCHEMA_NAME));
-            for (String sql : _createStrings) {
+            for (String sql : _creationStrings) {
                 _logger.error(sql);//TODO make it a trace
                 statement.executeUpdate(sql);
             }

@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="komando">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../komando/out/production/komando" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
