@@ -5,11 +5,21 @@
 
 package com.bearsnake.kinesis;
 
+import com.bearsnake.kinesis.entities.Cluster;
+import com.bearsnake.kinesis.exceptions.DatabaseException;
+import com.bearsnake.kinesis.exceptions.KinesisException;
+import com.bearsnake.kinesis.persistence.Database;
+import com.bearsnake.kinesis.persistence.SQLiteDatabase;
 import com.bearsnake.komando.ArgumentSwitch;
 import com.bearsnake.komando.CommandLineHandler;
 import com.bearsnake.komando.Switch;
 import com.bearsnake.komando.exceptions.KomandoException;
+import com.bearsnake.komando.values.StringValue;
 import com.bearsnake.komando.values.ValueType;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static com.bearsnake.kinesis.Kinesis.KINESIS_VERSION;
 
@@ -57,7 +67,39 @@ public class Initializer {
         } else if (result.isVersionRequested()) {
             System.out.printf("Version %s\n", KINESIS_VERSION);
         } else {
-            //TODO
+            var specs = result._switchSpecifications.get(_databaseFileSwitch);
+            var value = (StringValue) specs.get(0);
+            var init = new Initializer(value.getValue());
+            try {
+                init.process();
+            } catch (KinesisException ex) {
+                System.err.println("ERROR:" + ex);
+            }
         }
+    }
+
+    private final Database _database;
+    private final String _dbPath;
+
+    private Initializer(
+        final String dbPath
+    ) {
+        _dbPath = dbPath;
+        _database = SQLiteDatabase.createDatabase(dbPath);
+    }
+
+    private void process() throws KinesisException {
+        try {
+            Files.deleteIfExists(Path.of(_dbPath));
+        } catch (IOException ex) {
+            throw new DatabaseException("Cannot delete existing database file");
+        }
+
+        // Initialize a cluster
+        var cluster = Cluster.createStandardCluster("Sanctuary", 100, 10);
+        cluster.showGeometry();
+
+        _database.create();
+        _database.close();
     }
 }

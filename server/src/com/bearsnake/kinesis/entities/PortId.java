@@ -15,6 +15,10 @@ public class PortId {
         _value = id;
     }
 
+    PortId next() {
+        return new PortId(_value + 1);
+    }
+
     @Override
     public boolean equals(
         final Object obj

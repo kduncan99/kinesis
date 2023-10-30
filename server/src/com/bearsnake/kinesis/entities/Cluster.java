@@ -27,8 +27,8 @@ public class Cluster {
     private static final Logger LOGGER = LogManager.getLogger("Cluster");
     private static final Map<ClusterId, Cluster> _inventory = new HashMap<>();
 
-    public final ClusterId _clusterId;
-    public final String _name;
+    private final ClusterId _clusterId;
+    private final String _name;
     final Set<SectorId> _sectors = new HashSet<>();
 
     private Cluster(
@@ -48,14 +48,22 @@ public class Cluster {
         }
     }
 
+    public ClusterId getClusterId() { return _clusterId; }
+    public String getName() { return _name; }
+
     public static Cluster createStandardCluster(
         final String name,
-        final int sectorCount
+        final int sectorCount,
+        final int portCount
     ) {
         LOGGER.trace("Creating standard cluster name={} sectors={}", name, sectorCount);
 
         if ((sectorCount < 100) || (sectorCount > 10000)) {
             throw new RuntimeException("Invalid sector count");
+        }
+
+        if (portCount > sectorCount / 10) {
+            throw new RuntimeException("Too many ports specified");
         }
 
         var random = new Random(System.currentTimeMillis());
@@ -117,11 +125,31 @@ public class Cluster {
         // Any such sector gets a one-way link back to sector 1.
         for (var thisSectorId : cluster._sectors) {
             if (!thisSectorId.equals(firstSectorId)) {
-                var path = cluster.getShortestPath(thisSectorId, firstSectorId);
+                var path = getShortestPath(thisSectorId, firstSectorId);
                 if (path.size() > LONGEST_PATH_TO_HOME) {
                     Sector.getSector(thisSectorId).createLinkTo(firstSectorId);
                 }
             }
+        }
+
+        // Now do ports.
+        var counter = 0;
+        while (counter < portCount) {
+            // choose a sector at least 3 away from the first sector.
+            var sectorNumber = random.nextInt(sectorCount) + 1;
+            var sectorId = new SectorId(cluster._clusterId, sectorNumber);
+            var sector = Sector.getSector(sectorId);
+            var path = cluster.getShortestPath(sectorId, firstSectorId);
+            while ((Sector.getSector(sectorId).getPortId() != null) || (path.size() < 3)) {
+                sectorNumber = random.nextInt(sectorCount) + 1;
+                sectorId = new SectorId(cluster._clusterId, sectorNumber);
+                sector = Sector.getSector(sectorId);
+                path = cluster.getShortestPath(sectorId, firstSectorId);
+            }
+
+            var port = Port.createPort(sectorId);
+            sector.setPortId(port.getPortId());
+            counter++;
         }
 
         _inventory.put(cluster._clusterId, cluster);
@@ -144,7 +172,7 @@ public class Cluster {
         }
     }
 
-    public List<SectorId> getShortestPath(
+    public static List<SectorId> getShortestPath(
         final SectorId start,
         final SectorId goal
     ) {
@@ -161,7 +189,7 @@ public class Cluster {
      * If there is no path from the starting sector to the ending sector (which can happen with a non-empty avoid list)
      * the result is null.
      */
-    public LinkedList<SectorId> getShortestPath(
+    public static LinkedList<SectorId> getShortestPath(
         final SectorId start,
         final SectorId goal,
         final Collection<SectorId> avoid
@@ -203,8 +231,14 @@ public class Cluster {
         for (var sectorId : _sectors) {
             var sb = new StringBuilder();
             sb.append(sectorId.getSectorNumber()).append(":").append(" ");
-            for (var link : Sector.getSector(sectorId).getLinks()) {
+            var sector = Sector.getSector(sectorId);
+            for (var link : sector.getLinks()) {
                 sb.append(" ").append(link.getSectorNumber());
+            }
+
+            var pid = sector.getPortId();
+            if (pid != null) {
+                sb.append(" Port:").append(Port.getPort(pid));
             }
 
             System.out.println(sb);

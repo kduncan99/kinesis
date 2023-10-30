@@ -5,9 +5,9 @@
 
 package com.bearsnake.kinesis.exceptions;
 
-public class BadParameterException extends KinesisException {
+public class DatabaseException extends KinesisException {
 
-    public BadParameterException(
+    public DatabaseException(
         final String msg
     ) {
         super(msg);
