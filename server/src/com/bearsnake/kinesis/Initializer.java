@@ -8,8 +8,6 @@ package com.bearsnake.kinesis;
 import com.bearsnake.kinesis.entities.Cluster;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
 import com.bearsnake.kinesis.exceptions.KinesisException;
-import com.bearsnake.kinesis.persistence.Database;
-import com.bearsnake.kinesis.persistence.SQLiteDatabase;
 import com.bearsnake.komando.ArgumentSwitch;
 import com.bearsnake.komando.CommandLineHandler;
 import com.bearsnake.komando.Switch;
@@ -78,28 +76,24 @@ public class Initializer {
         }
     }
 
-    private final Database _database;
+    private final DatabaseWrapper _databaseWrapper;
     private final String _dbPath;
 
     private Initializer(
         final String dbPath
     ) {
         _dbPath = dbPath;
-        _database = SQLiteDatabase.createDatabase(dbPath);
+        _databaseWrapper = new DatabaseWrapper(dbPath);
     }
 
     private void process() throws KinesisException {
-        try {
-            Files.deleteIfExists(Path.of(_dbPath));
-        } catch (IOException ex) {
-            throw new DatabaseException("Cannot delete existing database file");
-        }
+        _databaseWrapper.deleteDatabase();
+        _databaseWrapper.createDatabase();
+        _databaseWrapper.createTables();
 
         // Initialize a cluster
-        var cluster = Cluster.createStandardCluster("Sanctuary", 100, 10);
-        cluster.showGeometry();
-
-        _database.create();
-        _database.close();
+        var cluster = Cluster.createStandardCluster(_databaseWrapper, "Sanctuary", 100, 10);
+        _databaseWrapper.closeConnections();
+//        cluster.showGeometry();
     }
 }

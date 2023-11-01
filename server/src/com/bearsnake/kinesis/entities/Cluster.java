@@ -5,6 +5,9 @@
 
 package com.bearsnake.kinesis.entities;
 
+import com.bearsnake.kinesis.DatabaseWrapper;
+import com.bearsnake.kinesis.exceptions.DatabaseException;
+import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,10 +55,11 @@ public class Cluster {
     public String getName() { return _name; }
 
     public static Cluster createStandardCluster(
+        final DatabaseWrapper databaseWrapper,
         final String name,
         final int sectorCount,
         final int portCount
-    ) {
+    ) throws DatabaseException {
         LOGGER.trace("Creating standard cluster name={} sectors={}", name, sectorCount);
 
         if ((sectorCount < 100) || (sectorCount > 10000)) {
@@ -139,12 +143,12 @@ public class Cluster {
             var sectorNumber = random.nextInt(sectorCount) + 1;
             var sectorId = new SectorId(cluster._clusterId, sectorNumber);
             var sector = Sector.getSector(sectorId);
-            var path = cluster.getShortestPath(sectorId, firstSectorId);
+            var path = getShortestPath(sectorId, firstSectorId);
             while ((Sector.getSector(sectorId).getPortId() != null) || (path.size() < 3)) {
                 sectorNumber = random.nextInt(sectorCount) + 1;
                 sectorId = new SectorId(cluster._clusterId, sectorNumber);
                 sector = Sector.getSector(sectorId);
-                path = cluster.getShortestPath(sectorId, firstSectorId);
+                path = getShortestPath(sectorId, firstSectorId);
             }
 
             var port = Port.createPort(sectorId);
@@ -153,6 +157,8 @@ public class Cluster {
         }
 
         _inventory.put(cluster._clusterId, cluster);
+
+        cluster.persist(databaseWrapper);
         return cluster;
     }
 
@@ -225,6 +231,63 @@ public class Cluster {
         }
 
         return subPath;
+    }
+
+    /**
+     * Stores everything related to this cluster (including the cluster) in the database.
+     * Used as a last step in creating and populating a cluster -- NOT for piece-meal things.
+     */
+    public void persist(
+        final DatabaseWrapper db
+    ) throws DatabaseException {
+        try {
+            var conn = db.createConnection();
+            conn.setAutoCommit(false);
+            conn.beginRequest();
+
+            var sql = String.format("INSERT INTO clusters (clusterId, clusterName) VALUES (%s, '%s');", _clusterId, _name);
+            var statement = conn.createStatement();
+            statement.execute(sql);
+
+            for (var sectorId : _sectors) {
+                var sector = Sector.getSector(sectorId);
+                sql = String.format("INSERT INTO sectors (clusterId, sectorNumber) VALUES (%s, %d);",
+                                    sectorId.getClusterId(),
+                                    sectorId.getSectorNumber());
+                statement = conn.createStatement();
+                statement.execute(sql);
+
+                for (var linkedSectorId : sector.getLinks()) {
+                    sql = String.format("INSERT INTO sectorLinks (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
+                                            + " VALUES (%s, %d, %s, %d);",
+                                        sectorId.getClusterId(),
+                                        sectorId.getSectorNumber(),
+                                        linkedSectorId.getClusterId(),
+                                        linkedSectorId.getSectorNumber());
+                    statement = conn.createStatement();
+                    statement.execute(sql);
+                }
+
+                var portId = sector.getPortId();
+                if (portId != null) {
+                    var port = Port.getPort(portId);
+                    sql = String.format("INSERT INTO ports (portId, portName, clusterId, sectorNumber)"
+                                            + " VALUES (%s, '%s', %s, %d);",
+                                        portId,
+                                        port.getName(),
+                                        port.getSectorId().getClusterId(),
+                                        port.getSectorId().getSectorNumber());
+                    statement = conn.createStatement();
+                    statement.execute(sql);
+                }
+            }
+
+            conn.commit();
+            db.deleteConnection(conn);
+        } catch (SQLException ex) {
+            LOGGER.catching(ex);
+            throw new DatabaseException(ex.getMessage());
+        }
     }
 
     public void showGeometry() {
