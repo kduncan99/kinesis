@@ -24,7 +24,6 @@ public class Sector {
         "CREATE TABLE sectors ("
             + "  clusterId integer NOT NULL,"
             + "  sectorNumber integer NOT NULL,"
-            // TODO foreign key ownerPlayerId *can* be NULL
             + "  FOREIGN KEY (clusterId) REFERENCES clusters(clusterId),"
             + "  PRIMARY KEY (clusterId, sectorNumber)"
             + ") WITHOUT ROWID;";
@@ -41,7 +40,7 @@ public class Sector {
             + ") WITHOUT ROWID;";
 
     private static final String INSERT_SECTOR_SQL =
-        "INSERT INTO sectors (clusterId, sectorNumber) VALUES (%s, %d);";//TODO ownerPlayerId
+        "INSERT INTO sectors (clusterId, sectorNumber) VALUES (%s, %d);";
 
     private static final String INSERT_SECTOR_LINK_SQL =
         "INSERT INTO sectorLinks (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
@@ -52,16 +51,14 @@ public class Sector {
 
     private final SectorId _sectorId;
     private final Set<SectorId> _links;
-    private PlayerId _ownerId;
-    private PlanetId _planetId;
-    private PortId _portId;
+    private PlanetId _planetId; // TODO do we need this here?
+    private PortId _portId; // TODO do we need this here?
 
     private Sector (
         final SectorId sid
     ) {
         _sectorId = sid;
         _links = new HashSet<>();
-        _ownerId = null;
         _planetId = null;
         _portId = null;
     }
@@ -115,13 +112,11 @@ public class Sector {
     }
 
     public int getLinkCount() { return _links.size(); }
-    public PlayerId getOwnerId() { return _ownerId; }
     public PlanetId getPlanetId() { return _planetId; }
     public PortId getPortId() { return _portId; }
     public SectorId getSectorId() { return _sectorId; }
     public int getSectorNumber() { return _sectorId.getSectorNumber(); }
 
-    public void setOwnerId(final PlayerId value) { _ownerId = value; }
     public void setPlanetId(final PlanetId value) { _planetId = value; }
     public void setPortId(final PortId value) { _portId = value; }
 
@@ -146,7 +141,7 @@ public class Sector {
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
-        var sql = String.format(INSERT_SECTOR_SQL, _sectorId.getClusterId(), _sectorId.getSectorNumber());// TODO owner player ID
+        var sql = String.format(INSERT_SECTOR_SQL, _sectorId.getClusterId(), _sectorId.getSectorNumber());
         var statement = conn.createStatement();
         statement.execute(sql);
 

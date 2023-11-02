@@ -6,6 +6,8 @@
 package com.bearsnake.kinesis;
 
 import com.bearsnake.kinesis.entities.Cluster;
+import com.bearsnake.kinesis.entities.Planet;
+import com.bearsnake.kinesis.entities.Player;
 import com.bearsnake.kinesis.entities.Port;
 import com.bearsnake.kinesis.entities.Sector;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
@@ -86,9 +88,11 @@ public class DatabaseWrapper {
             conn.setAutoCommit(false);
             conn.beginRequest();
 
+            Player.dbCreateTable(conn);
             Cluster.dbCreateTable(conn);
             Sector.dbCreateTables(conn);
             Port.dbCreateTable(conn);
+            Planet.dbCreateTable(conn);
 
             conn.commit();
             deleteConnection(conn);

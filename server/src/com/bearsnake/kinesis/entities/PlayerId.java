@@ -15,6 +15,10 @@ public class PlayerId {
         _value = id;
     }
 
+    PlayerId next() {
+        return new PlayerId(_value + 1);
+    }
+
     @Override
     public boolean equals(
         final Object obj

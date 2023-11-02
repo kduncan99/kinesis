@@ -15,6 +15,10 @@ public class PlanetId {
         _value = id;
     }
 
+    PlanetId next() {
+        return new PlanetId(_value + 1);
+    }
+
     @Override
     public boolean equals(
         final Object obj

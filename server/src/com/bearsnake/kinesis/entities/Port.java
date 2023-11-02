@@ -28,16 +28,19 @@ public class Port {
         + "  portName text NOT NULL,"
         + "  clusterId integer NOT NULL,"
         + "  sectorNumber integer NOT NULL,"
-        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber)"
+        + "  ownerId integer,"
+        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
+        + "  FOREIGN KEY (ownerId) REFERENCES players(playerId)"
         + ") WITHOUT ROWID;";
 
     private static final String INSERT_SQL =
-        "INSERT INTO ports (portId, portName, clusterId, sectorNumber)"
-        + " VALUES (%s, '%s', %s, %d);";
+        "INSERT INTO ports (portId, portName, clusterId, sectorNumber, ownerId)"
+        + " VALUES (%s, \"%s\", %s, %d, null);";
 
     private final PortId _identifier;
     private final String _name;
     private final SectorId _sectorId;
+    private PlayerId _ownerId = null;
     // TODO resource amounts, production/consumption
 
     private Port(
@@ -50,9 +53,11 @@ public class Port {
         _sectorId = sectorId;
     }
 
+    public PlayerId getOwnerId() { return _ownerId; }
     public PortId getPortId() { return _identifier; }
     public String getName() { return _name; }
     public SectorId getSectorId() { return _sectorId; }
+    public void setOwnerId(final PlayerId value) { _ownerId = value; }
 
     @Override
     public String toString() {
