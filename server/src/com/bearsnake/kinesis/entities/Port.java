@@ -21,7 +21,7 @@ public class Port {
 
     private static final Logger LOGGER = LogManager.getLogger("Port");
     private static final Map<PortId, Port> _inventory = new HashMap<>();
-    private static final int _nextPortIdentifier = 1;
+    private static int _nextPortIdentifier = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE ports ("
         + "  portId integer PRIMARY KEY,"
@@ -71,7 +71,7 @@ public class Port {
         final SectorId sectorId
     ) {
         var name = PortNames.selectName();
-        var pid = new PortId(_nextPortIdentifier);
+        var pid = new PortId(_nextPortIdentifier++);
         while (_inventory.containsKey(pid)) {
             pid = pid.next();
         }

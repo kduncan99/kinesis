@@ -16,7 +16,7 @@ public class Player {
 
     private static final Logger LOGGER = LogManager.getLogger("Player");
     private static final Map<PlayerId, Player> _inventory = new HashMap<>();
-    private static final int _nextPlayerIdentifier = 1;
+    private static int _nextPlayerIdentifier = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE players ("
         + "  playerId integer PRIMARY KEY,"
@@ -57,7 +57,7 @@ public class Player {
         final String username,
         final String password
     ) {
-        var plid = new PlayerId(_nextPlayerIdentifier);
+        var plid = new PlayerId(_nextPlayerIdentifier++);
         while (_inventory.containsKey(plid)) {
             plid = plid.next();
         }

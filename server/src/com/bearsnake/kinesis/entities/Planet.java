@@ -20,14 +20,14 @@ public class Planet {
 
     private static final Logger LOGGER = LogManager.getLogger("Planet");
     private static final Map<PlanetId, Planet> _inventory = new HashMap<>();
-    private static final int _nextPlanetIdentifier = 1;
+    private static int _nextPlanetIdentifier = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE planets ("
         + "  planetId integer PRIMARY KEY,"
         + "  planetName text NOT NULL,"
         + "  clusterId integer NOT NULL,"
         + "  sectorNumber integer NOT NULL,"
-        + "  ownerId integer,"
+        + "  ownerId integer NOT NULL,"
         + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
         + "  FOREIGN KEY (ownerId) REFERENCES players(playerId)"
         + ") WITHOUT ROWID;";
@@ -35,6 +35,9 @@ public class Planet {
     private static final String INSERT_SQL =
         "INSERT INTO ports (planetId, planetName, clusterId, sectorNumber, ownerId)"
             + " VALUES (%s, \"%s\", %s, %d, %s);";
+
+    private static final String QUERY_SQL =
+        "SELECT planetId, planetName, clusterId, sectorNumber, ownerId FROM planets ORDER BY planetId;";
 
     private final PlanetId _identifier;
     private final String _name;
@@ -65,7 +68,7 @@ public class Planet {
         final SectorId sectorId,
         final PlayerId ownerId
     ) {
-        var plid = new PlanetId(_nextPlanetIdentifier);
+        var plid = new PlanetId(_nextPlanetIdentifier++);
         while (_inventory.containsKey(plid)) {
             plid = plid.next();
         }
@@ -87,6 +90,27 @@ public class Planet {
         LOGGER.trace(CREATE_TABLE_SQL);
         var statement = conn.createStatement();
         statement.execute(CREATE_TABLE_SQL);
+    }
+
+    public static void dbLoad(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace("dbLoad()");
+        _inventory.clear();
+        var statement = conn.createStatement();
+        var rs = statement.executeQuery(QUERY_SQL);
+        while (rs.next()) {
+            var ident = rs.getInt("planetId");
+            var planetId = new PlanetId(ident);
+            var planetName = rs.getString("planetName");
+            var sectorId = new SectorId(new ClusterId(rs.getInt("clusterId")),
+                                        rs.getInt("sectorNumber"));
+            var ownerId = new PlayerId(rs.getInt("ownerId"));
+
+            var planet = new Planet(planetId, planetName, sectorId, ownerId);
+            _inventory.put(planetId, planet);
+            _nextPlanetIdentifier = ident + 1;
+        }
     }
 
     public void dbPersist(

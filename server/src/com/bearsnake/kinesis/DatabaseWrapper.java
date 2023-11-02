@@ -10,6 +10,7 @@ import com.bearsnake.kinesis.entities.Planet;
 import com.bearsnake.kinesis.entities.Player;
 import com.bearsnake.kinesis.entities.Port;
 import com.bearsnake.kinesis.entities.Sector;
+import com.bearsnake.kinesis.entities.Ship;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,6 +90,7 @@ public class DatabaseWrapper {
             conn.beginRequest();
 
             Player.dbCreateTable(conn);
+            Ship.dbCreateTable(conn);
             Cluster.dbCreateTable(conn);
             Sector.dbCreateTables(conn);
             Port.dbCreateTable(conn);
