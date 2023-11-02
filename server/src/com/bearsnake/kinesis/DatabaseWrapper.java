@@ -18,8 +18,6 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.LinkedList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +27,6 @@ public class DatabaseWrapper {
 
     private final String _path;
     private final String _url;
-    protected final Collection<Connection> _connections = new LinkedList<>();
 
     public DatabaseWrapper(
         final String path
@@ -38,27 +35,10 @@ public class DatabaseWrapper {
         _url = "jdbc:sqlite:" + _path;
     }
 
-    public synchronized void closeConnections() throws DatabaseException {
-        LOGGER.trace("closeConnections");
-        var iter = _connections.iterator();
-        while (iter.hasNext()) {
-            var conn = iter.next();
-            try {
-                conn.close();
-            } catch (SQLException ex) {
-                LOGGER.catching(ex);
-            }
-            iter.remove();
-        }
-    }
-
     public synchronized Connection createConnection() throws DatabaseException {
         LOGGER.trace("createConnection");
         try {
-            var conn = DriverManager.getConnection(_url);
-            conn.setAutoCommit(false);
-            _connections.add(conn);
-            return conn;
+            return DriverManager.getConnection(_url);
         } catch (SQLException ex) {
             LOGGER.catching(ex);
             throw new DatabaseException(ex.getMessage());
@@ -97,25 +77,6 @@ public class DatabaseWrapper {
             Planet.dbCreateTable(conn);
 
             conn.commit();
-            deleteConnection(conn);
-        } catch (SQLException ex) {
-            LOGGER.catching(ex);
-            throw new DatabaseException(ex.getMessage());
-        }
-    }
-
-    public synchronized void deleteConnection(
-        final Connection conn
-    ) throws DatabaseException {
-        LOGGER.trace("deleteConnection()");
-        if (!_connections.contains(conn)) {
-            var ex = new DatabaseException("Connection is not registered with database wrapper");
-            LOGGER.throwing(ex);
-            throw ex;
-        }
-
-        _connections.remove(conn);
-        try {
             conn.close();
         } catch (SQLException ex) {
             LOGGER.catching(ex);
@@ -128,6 +89,23 @@ public class DatabaseWrapper {
         try {
             Files.deleteIfExists(Path.of(_path));
         } catch (IOException ex) {
+            LOGGER.catching(ex);
+            throw new DatabaseException(ex.getMessage());
+        }
+    }
+
+    public void loadFromDatabase() throws DatabaseException {
+        LOGGER.trace("loadFromDatabase()");
+        try {
+            var conn = createConnection();
+            Player.dbLoad(conn);
+            Cluster.dbLoad(conn);
+            Sector.dbLoad(conn);
+            Ship.dbLoad(conn);
+            Planet.dbLoad(conn);
+            Port.dbLoad(conn);
+            conn.close();
+        } catch (SQLException ex) {
             LOGGER.catching(ex);
             throw new DatabaseException(ex.getMessage());
         }

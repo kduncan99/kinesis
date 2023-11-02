@@ -15,76 +15,71 @@ import java.util.Map;
 
 /**
  * Represents a port within our universe.
- * A port is located at a specific sector within a specific cluster - somewhere a little bit away from a planet
+ * Ports are assigned to a particular sector (never more than one per) and never move.
+ * Ports *may* be owned by a player.
  */
 public class Port {
 
     private static final Logger LOGGER = LogManager.getLogger("Port");
     private static final Map<PortId, Port> _inventory = new HashMap<>();
-    private static int _nextPortIdentifier = 1;
+    private static long _nextPortIdentifier = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE ports ("
         + "  portId integer PRIMARY KEY,"
         + "  portName text NOT NULL,"
-        + "  clusterId integer NOT NULL,"
-        + "  sectorNumber integer NOT NULL,"
+        + "  locationId integer NOT NULL,"
         + "  ownerId integer,"
-        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
+        + "  FOREIGN KEY (locationId) REFERENCES sectors(sectorId),"
         + "  FOREIGN KEY (ownerId) REFERENCES players(playerId)"
         + ") WITHOUT ROWID;";
 
     private static final String INSERT_SQL =
-        "INSERT INTO ports (portId, portName, clusterId, sectorNumber, ownerId)"
-        + " VALUES (%s, \"%s\", %s, %d, null);";
+        "INSERT INTO ports (portId, portName, locationId, ownerId)"
+        + " VALUES (%s, \"%s\", %s, %s);";
 
-    private final PortId _identifier;
-    private final String _name;
-    private final SectorId _sectorId;
-    private PlayerId _ownerId = null;
+    private final PortId _portId;
+    private final String _portName;
+    private final Sector _location;
+    private Player _owner;
     // TODO resource amounts, production/consumption
 
     private Port(
         final PortId identifier,
         final String name,
-        final SectorId sectorId
+        final Sector location,
+        final Player owner
     ) {
-        _identifier = identifier;
-        _name = name;
-        _sectorId = sectorId;
+        _portId = identifier;
+        _portName = name;
+        _location = location;
+        _owner = owner;
     }
 
-    public PlayerId getOwnerId() { return _ownerId; }
-    public PortId getPortId() { return _identifier; }
-    public String getName() { return _name; }
-    public SectorId getSectorId() { return _sectorId; }
-    public void setOwnerId(final PlayerId value) { _ownerId = value; }
+    public Sector getLocation() { return _location; }
+    public Player getOwner() { return _owner; }
+    public static Port getPort(final PortId portId) { return _inventory.get(portId); }
+    public PortId getPortId() { return _portId; }
+    public String getPortName() { return _portName; }
+    public boolean hasOwner() { return _owner != null; }
+    public void setOwnerId(final Player value) { _owner = value; }
 
     @Override
     public String toString() {
         var sb = new StringBuilder();
-        sb.append(_name).append(" (").append(_identifier).append(")");
+        sb.append(_portName).append(" (").append(_portId).append(")");
         //TODO show production/consumption levels and resource amounts when we have them.
         return sb.toString();
     }
 
     public static Port createPort(
-        final SectorId sectorId
+        final Sector location,
+        final Player owner
     ) {
         var name = PortNames.selectName();
         var pid = new PortId(_nextPortIdentifier++);
-        while (_inventory.containsKey(pid)) {
-            pid = pid.next();
-        }
-
-        var p = new Port(pid, name, sectorId);
+        var p = new Port(pid, name, location, owner);
         _inventory.put(pid, p);
         return p;
-    }
-
-    public static Port getPort(
-        final PortId pid
-    ) {
-        return _inventory.get(pid);
     }
 
     public static void dbCreateTable(
@@ -95,11 +90,82 @@ public class Port {
         statement.execute(CREATE_TABLE_SQL);
     }
 
+    /**
+     * Loads Port entities from the database. MUST load Players and Sectors first.
+     */
+    public static void dbLoad(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace("dbLoad()");
+
+        _inventory.clear();
+        var sql = String.format("SELECT * FROM ports ORDER BY portId;");
+        var statement = conn.createStatement();
+        var rs = statement.executeQuery(sql);
+
+        while (rs.next()) {
+            var portId = new PortId(rs.getLong("portId"));
+            var portName = rs.getString("portName");
+            var location = Sector.getSector(new Sector.SectorId(rs.getLong("locationId")));
+            Player owner = null;
+            var pid = rs.getLong("ownerId");
+            if (!rs.wasNull()) {
+                owner = Player.getPlayer(new Player.PlayerId(pid));
+            }
+
+            var p = new Port(portId, portName, location, owner);
+            _inventory.put(portId, p);
+            _nextPortIdentifier = portId._value + 1;
+
+            location.setPort(p);
+        }
+
+        var msg = String.format("Loaded %d ports...\n", _inventory.size());
+        System.out.println(msg);
+        LOGGER.info(msg);
+    }
+
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
-        var sql = String.format(INSERT_SQL, _identifier, _name, _sectorId.getClusterId(), _sectorId.getSectorNumber());
+        var sql = String.format(INSERT_SQL,
+                                _portId,
+                                _portName,
+                                _location.getSectorId(),
+                                hasOwner() ? _owner.getPlayerId() : "null");
         var statement = conn.createStatement();
         statement.execute(sql);
+    }
+
+    public static class PortId {
+
+        private final long _value;
+
+        public PortId(
+            final long id
+        ) {
+            _value = id;
+        }
+
+        @Override
+        public boolean equals(
+            final Object obj
+        ) {
+            if (obj instanceof PortId id) {
+                return id._value == _value;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return (int)_value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(_value);
+        }
     }
 }

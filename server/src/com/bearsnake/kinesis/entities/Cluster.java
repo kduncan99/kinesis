@@ -37,33 +37,41 @@ public class Cluster {
     private static final String INSERT_SQL =
         "INSERT INTO clusters (clusterId, clusterName) VALUES (%s, '%s');";
 
-    private static final int LONGEST_PATH_TO_HOME = 20;
     private static final Logger LOGGER = LogManager.getLogger("Cluster");
+    private static final int LONGEST_PATH_TO_HOME = 20;
+    private static long _nextClusterId = 1;
     private static final Map<ClusterId, Cluster> _inventory = new HashMap<>();
 
     private final ClusterId _clusterId;
-    private final String _name;
-    final Set<SectorId> _sectors = new HashSet<>();
+    private final String _clusterName;
+    final Set<Sector> _sectors = new HashSet<>();
 
     private Cluster(
+        final ClusterId clusterId,
         final String name,
-        final int sectorCount
+        final Collection<Sector> sectors
     ) {
-        ClusterId cid = new ClusterId(1);
-        while (_inventory.containsKey(cid)) {
-            cid = cid.next();
-        }
-
-        _clusterId = cid;
-        _name = name;
-        for (int sectorNum = 1; sectorNum <= sectorCount; sectorNum++) {
-            var s = Sector.createNewSector(cid, sectorNum);
-            _sectors.add(s.getSectorId());
-        }
+        _clusterId = clusterId;
+        _clusterName = name;
+        _sectors.addAll(sectors);
     }
 
+    void addSector(final Sector sector) { _sectors.add(sector); }
+    public static Cluster getCluster(final ClusterId clusterId) { return _inventory.get(clusterId); }
     public ClusterId getClusterId() { return _clusterId; }
-    public String getName() { return _name; }
+    public String getClusterName() { return _clusterName; }
+
+    public Sector getSector(
+        final int sectorNumber
+    ) {
+        for (var sector : _sectors) {
+            if (sector.getSectorNumber() == sectorNumber) {
+                return sector;
+            }
+        }
+
+        return null;
+    }
 
     public static Cluster createStandardCluster(
         final DatabaseWrapper databaseWrapper,
@@ -81,68 +89,69 @@ public class Cluster {
             throw new RuntimeException("Too many ports specified");
         }
 
-        var random = new Random(System.currentTimeMillis());
-        var cluster = new Cluster(name, sectorCount);
+        var clusterId = new ClusterId(_nextClusterId++);
+        var cluster = new Cluster(clusterId, name, Collections.emptySet());
+        for (int sectorNum = 1; sectorNum <= sectorCount; sectorNum++) {
+            cluster._sectors.add(Sector.createNewSector(cluster, sectorNum));
+        }
 
         // establish initial random links between sectors
+        var random = new Random(System.currentTimeMillis());
         var lowLimit = 1;
         var highLimit = cluster._sectors.size();
-        for (var thisSid : cluster._sectors) {
-            var thisSectorNumber = thisSid.getSectorNumber();
-            var targetSectorNumber = thisSectorNumber + random.nextInt(21) - 10;
-            while ((targetSectorNumber == thisSectorNumber)
+        for (var sourceSector : cluster._sectors) {
+            var sourceSectorNumber = sourceSector.getSectorNumber();
+            var targetSectorNumber = sourceSectorNumber + random.nextInt(21) - 10;
+            while ((targetSectorNumber == sourceSectorNumber)
                 || (targetSectorNumber < lowLimit)
                 || (targetSectorNumber > highLimit)) {
-                targetSectorNumber = thisSectorNumber + random.nextInt(21) - 10;
+                targetSectorNumber = sourceSectorNumber + random.nextInt(21) - 10;
             }
 
-            var targetSid = new SectorId(cluster._clusterId, targetSectorNumber);
-            Sector.createBidirectionalLink(thisSid, targetSid);
+            Sector.createBidirectionalLink(sourceSector, cluster.getSector(targetSectorNumber));
         }
 
         // Make sure sector 1 has at least 5 links. That is an arbitrary, but probably good number
-        var firstSectorId = new SectorId(cluster._clusterId, 1);
-        var firstSector = Sector.getSector(firstSectorId);
+        var firstSector = cluster.getSector(1);
         while (firstSector.getLinkCount() < 5) {
             var targetSectorNum = random.nextInt(10) + 2; // sector number ranges from 2 to 11
-            var targetSid = new SectorId(cluster._clusterId, targetSectorNum);
-            Sector.createBidirectionalLink(firstSectorId, targetSid);
+            Sector.createBidirectionalLink(firstSector, cluster.getSector(targetSectorNum));
         }
 
         // Create an initial group of interconnected sectors, which includes sector 1.
-        var group = new HashSet<SectorId>();
-        cluster.collectRelatedSectors(group, firstSectorId);
+        var group = new HashSet<Sector>();
+        cluster.collectRelatedSectors(group, firstSector);
 
         // Now find any orphaned sectors and link them into the main group.
         // We do this by checking the existing sectors, and if we find one which is not in the main group,
         // we create an orphan group for the orphan (which may include many other orphaned sectors as well),
         // we link the original orphan to a sector in the main group, then add all the orphan sectors to
         // the main group... then continue iterating over the sectors until done.
-        for (var thisSectorId : cluster._sectors) {
-            if (!group.contains(thisSectorId)) {
-                var orphans = new HashSet<SectorId>();
-                cluster.collectRelatedSectors(orphans, thisSectorId);
+        for (var thisSector : cluster._sectors) {
+            if (!group.contains(thisSector)) {
+                var orphans = new HashSet<Sector>();
+                cluster.collectRelatedSectors(orphans, thisSector);
 
                 // choose a sector from the main group at random
                 var targetSectorNumber = random.nextInt(sectorCount) + 1;
-                var targetSectorId = new SectorId(cluster._clusterId, targetSectorNumber);
-                while ((targetSectorNumber < 2) || !group.contains(targetSectorId)) {
+                var targetSector = cluster.getSector(targetSectorNumber);
+                while ((targetSectorNumber < 2) || !group.contains(targetSector)) {
                     targetSectorNumber = random.nextInt(sectorCount) + 1;
-                    targetSectorId = new SectorId(cluster._clusterId, targetSectorNumber);
+                    targetSector = cluster.getSector(targetSectorNumber);
                 }
 
-                Sector.createBidirectionalLink(thisSectorId, targetSectorId);
+                Sector.createBidirectionalLink(thisSector, targetSector);
                 group.addAll(orphans);
             }
         }
 
         // Now there are no orphans. But there might be sectors which are too far from sector 1.
         // Any such sector gets a one-way link back to sector 1.
-        for (var thisSectorId : cluster._sectors) {
-            if (!thisSectorId.equals(firstSectorId)) {
-                var path = getShortestPath(thisSectorId, firstSectorId);
+        for (var thisSector : cluster._sectors) {
+            if (!thisSector.equals(firstSector)) {
+                var path = getShortestPath(thisSector, firstSector);
                 if (path.size() > LONGEST_PATH_TO_HOME) {
-                    Sector.getSector(thisSectorId).createLinkTo(firstSectorId);
+                    thisSector.createLinkTo(firstSector);
                 }
             }
         }
@@ -152,24 +161,32 @@ public class Cluster {
         while (counter < portCount) {
             // choose a sector at least 3 away from the first sector.
             var sectorNumber = random.nextInt(sectorCount) + 1;
-            var sectorId = new SectorId(cluster._clusterId, sectorNumber);
-            var sector = Sector.getSector(sectorId);
-            var path = getShortestPath(sectorId, firstSectorId);
-            while ((Sector.getSector(sectorId).getPortId() != null) || (path.size() < 3)) {
+            var sector = cluster.getSector(sectorNumber);
+            var path = getShortestPath(sector, firstSector);
+            while ((sector.getPort() != null) || (path.size() < 3)) {
                 sectorNumber = random.nextInt(sectorCount) + 1;
-                sectorId = new SectorId(cluster._clusterId, sectorNumber);
-                sector = Sector.getSector(sectorId);
-                path = getShortestPath(sectorId, firstSectorId);
+                sector = cluster.getSector(sectorNumber);
+                path = getShortestPath(sector, firstSector);
             }
 
-            var port = Port.createPort(sectorId);
-            sector.setPortId(port.getPortId());
+            var port = Port.createPort(sector, null);
+            sector.setPort(port);
             counter++;
         }
 
-        _inventory.put(cluster._clusterId, cluster);
+        try {
+            var conn = databaseWrapper.createConnection();
+            conn.setAutoCommit(false);
+            conn.beginRequest();
+            cluster.dbPersist(conn);
+            conn.commit();
+            conn.close();
+        } catch (SQLException ex) {
+            LOGGER.catching(ex);
+            throw new DatabaseException(ex.getMessage());
+        }
 
-        cluster.persist(databaseWrapper);
+        _inventory.put(cluster._clusterId, cluster);
         return cluster;
     }
 
@@ -178,20 +195,23 @@ public class Cluster {
      * starting with one particular sector.
      */
     private void collectRelatedSectors(
-        final HashSet<SectorId> set,
-        final SectorId initialSid
+        final HashSet<Sector> set,
+        final Sector baseSector
     ) {
-        if (!set.contains(initialSid)) {
-            set.add(initialSid);
-            for (var linkedSectorId : Sector.getSector(initialSid).getLinks()) {
-                collectRelatedSectors(set, linkedSectorId);
+        if (!set.contains(baseSector)) {
+            set.add(baseSector);
+            for (var link : baseSector.getLinkedSectors()) {
+                collectRelatedSectors(set, link);
             }
         }
     }
 
-    public static List<SectorId> getShortestPath(
-        final SectorId start,
-        final SectorId goal
+    /**
+     * Wrapper which has no initial avoidance list
+     */
+    public static List<Sector> getShortestPath(
+        final Sector start,
+        final Sector goal
     ) {
         return getShortestPath(start, goal, Collections.emptyList());
     }
@@ -206,10 +226,10 @@ public class Cluster {
      * If there is no path from the starting sector to the ending sector (which can happen with a non-empty avoid list)
      * the result is null.
      */
-    public static LinkedList<SectorId> getShortestPath(
-        final SectorId start,
-        final SectorId goal,
-        final Collection<SectorId> avoid
+    public static LinkedList<Sector> getShortestPath(
+        final Sector start,
+        final Sector goal,
+        final Collection<Sector> avoid
     ) {
         if (avoid.contains(goal)) {
             return null;
@@ -219,15 +239,15 @@ public class Cluster {
             return new LinkedList<>();
         }
 
-        var links = Sector.getSector(start).getLinks();
+        var links = start.getLinkedSectors();
         if (links.contains(goal)) {
-            var result = new LinkedList<SectorId>();
+            var result = new LinkedList<Sector>();
             result.add(goal);
             return result;
         }
 
         var subAvoid = new LinkedList<>(avoid);
-        LinkedList<SectorId> subPath = null;
+        LinkedList<Sector> subPath = null;
         subAvoid.add(start);
         for (var link : links) {
             if (!avoid.contains(link)) {
@@ -244,52 +264,22 @@ public class Cluster {
         return subPath;
     }
 
-    /**
-     * Stores everything related to this cluster (including the cluster) in the database.
-     * Used as a last step in creating and populating a cluster -- NOT for piece-meal things.
-     */
-    public void persist(
-        final DatabaseWrapper db
-    ) throws DatabaseException {
-        try {
-            var conn = db.createConnection();
-            conn.setAutoCommit(false);
-            conn.beginRequest();
-
-            dbPersist(conn);
-
-            for (var sectorId : _sectors) {
-                var sector = Sector.getSector(sectorId);
-                sector.dbPersist(conn);
-
-                // TODO planet for sector
-
-                var portId = sector.getPortId();
-                if (portId != null) {
-                    Port.getPort(portId).dbPersist(conn);
-                }
-            }
-
-            conn.commit();
-            db.deleteConnection(conn);
-        } catch (SQLException ex) {
-            LOGGER.catching(ex);
-            throw new DatabaseException(ex.getMessage());
-        }
-    }
-
     public void showGeometry() {
-        for (var sectorId : _sectors) {
+        for (var sector : _sectors) {
             var sb = new StringBuilder();
-            sb.append(sectorId.getSectorNumber()).append(":").append(" ");
-            var sector = Sector.getSector(sectorId);
-            for (var link : sector.getLinks()) {
+            sb.append(sector.getSectorNumber()).append(":").append(" ");
+            for (var link : sector.getLinkedSectors()) {
                 sb.append(" ").append(link.getSectorNumber());
             }
 
-            var pid = sector.getPortId();
-            if (pid != null) {
-                sb.append(" Port:").append(Port.getPort(pid));
+            var planet = sector.getPlanet();
+            if (planet != null) {
+                sb.append(" Planet:").append(planet);
+            }
+
+            var port = sector.getPort();
+            if (port != null) {
+                sb.append(" Port:").append(port);
             }
 
             System.out.println(sb);
@@ -316,11 +306,86 @@ public class Cluster {
         statement.execute(CREATE_TABLE_SQL);
     }
 
+    /**
+     * Loads all clusters
+     */
+    public static void dbLoad(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace("dbLoad()");
+
+        _inventory.clear();
+        var sql = "SELECT * FROM clusters ORDER BY clusterId;";
+        var statement = conn.createStatement();
+        var rs = statement.executeQuery(sql);
+
+        while (rs.next()) {
+            var cid = rs.getLong("clusterId");
+            var clusterId = new ClusterId(cid);
+            var clusterName = rs.getString("clusterName");
+            var cluster = new Cluster(clusterId, clusterName, Collections.emptySet());
+            _inventory.put(clusterId, cluster);
+            _nextClusterId = cid + 1;
+        }
+
+        var msg = String.format("Loaded %d clusters...\n", _inventory.size());
+        System.out.println(msg);
+        LOGGER.info(msg);
+    }
+
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
-        var sql = String.format(INSERT_SQL, _clusterId, _name);
+        var sql = String.format(INSERT_SQL, _clusterId, _clusterName);
         var statement = conn.createStatement();
         statement.execute(sql);
+
+        for (var sector : _sectors) {
+            sector.dbPersist(conn);
+
+            var planet = sector.getPlanet();
+            if (planet != null) {
+                planet.dbPersist(conn);
+            }
+
+            var port = sector.getPort();
+            if (port != null) {
+                port.dbPersist(conn);
+            }
+        }
+
+        conn.commit();
+    }
+
+    public static class ClusterId {
+
+        private final long _value;
+
+        public ClusterId(
+            final long id
+        ) {
+            _value = id;
+        }
+
+        @Override
+        public boolean equals(
+            final Object obj
+        ) {
+            if (obj instanceof ClusterId id) {
+                return id._value == _value;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return (int)_value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(_value);
+        }
     }
 }

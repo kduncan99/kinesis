@@ -20,68 +20,55 @@ public class Planet {
 
     private static final Logger LOGGER = LogManager.getLogger("Planet");
     private static final Map<PlanetId, Planet> _inventory = new HashMap<>();
-    private static int _nextPlanetIdentifier = 1;
+    private static long _nextPlanetId = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE planets ("
         + "  planetId integer PRIMARY KEY,"
         + "  planetName text NOT NULL,"
-        + "  clusterId integer NOT NULL,"
-        + "  sectorNumber integer NOT NULL,"
+        + "  locationId integer NOT NULL,"
         + "  ownerId integer NOT NULL,"
-        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
+        + "  FOREIGN KEY (locationId) REFERENCES sectors(sectorId),"
         + "  FOREIGN KEY (ownerId) REFERENCES players(playerId)"
         + ") WITHOUT ROWID;";
 
     private static final String INSERT_SQL =
-        "INSERT INTO ports (planetId, planetName, clusterId, sectorNumber, ownerId)"
-            + " VALUES (%s, \"%s\", %s, %d, %s);";
+        "INSERT INTO ports (planetId, planetName, locationId, ownerId)"
+            + " VALUES (%s, \"%s\", %s, %s);";
 
-    private static final String QUERY_SQL =
-        "SELECT planetId, planetName, clusterId, sectorNumber, ownerId FROM planets ORDER BY planetId;";
-
-    private final PlanetId _identifier;
-    private final String _name;
-    private PlayerId _ownerId;
-    private SectorId _sectorId;
+    private final PlanetId _planetId;
+    private final String _planetName;
+    private Player _owner;
+    private Sector _location;
 
     private Planet(
         final PlanetId identifier,
         final String name,
-        final SectorId sectorId,
-        final PlayerId ownerId
+        final Sector location,
+        final Player owner
     ) {
-        _identifier = identifier;
-        _name = name;
-        _ownerId = ownerId;
-        _sectorId = sectorId;
+        _planetId = identifier;
+        _planetName = name;
+        _owner = owner;
+        _location = location;
     }
 
-    public PlanetId getPlanetId() { return _identifier; }
-    public String getName() { return _name; }
-    public PlayerId getOwnerId() { return _ownerId; }
-    public SectorId getSectorId() { return _sectorId; }
-    public void setOwnerId(final PlayerId value) { _ownerId = value; }
-    public void setSectorId(final SectorId value) { _sectorId = value; }
+    public static Planet getPlanet(final PlanetId plid) { return _inventory.get(plid); }
+    public PlanetId getPlanetId() { return _planetId; }
+    public String getPlanetName() { return _planetName; }
+    public Sector getLocation() { return _location; }
+    public Player getOwner() { return _owner; }
+    public void setLocation(final Sector value) { _location = value; }
+    public void setOwner(final Player value) { _owner = value; }
 
     public static Planet createPlanet(
         final String name,
-        final SectorId sectorId,
-        final PlayerId ownerId
+        final Sector location,
+        final Player owner
     ) {
-        var plid = new PlanetId(_nextPlanetIdentifier++);
-        while (_inventory.containsKey(plid)) {
-            plid = plid.next();
-        }
-
-        var p = new Planet(plid, name, sectorId, ownerId);
-        _inventory.put(plid, p);
+        var pid = new PlanetId(_nextPlanetId++);
+        var p = new Planet(pid, name, location, owner);
+        _inventory.put(pid, p);
         return p;
-    }
-
-    public static Planet getPlanet(
-        final PlanetId plid
-    ) {
-        return _inventory.get(plid);
     }
 
     public static void dbCreateTable(
@@ -92,37 +79,77 @@ public class Planet {
         statement.execute(CREATE_TABLE_SQL);
     }
 
+    /**
+     * Loads Planet objects from the database. Sectors and Players MUST be loaded before calling here.
+     */
     public static void dbLoad(
         final Connection conn
     ) throws SQLException {
         LOGGER.trace("dbLoad()");
-        _inventory.clear();
-        var statement = conn.createStatement();
-        var rs = statement.executeQuery(QUERY_SQL);
-        while (rs.next()) {
-            var ident = rs.getInt("planetId");
-            var planetId = new PlanetId(ident);
-            var planetName = rs.getString("planetName");
-            var sectorId = new SectorId(new ClusterId(rs.getInt("clusterId")),
-                                        rs.getInt("sectorNumber"));
-            var ownerId = new PlayerId(rs.getInt("ownerId"));
 
-            var planet = new Planet(planetId, planetName, sectorId, ownerId);
+        _inventory.clear();
+        var sql = "SELECT * FROM planets ORDER BY planetId;";
+        var statement = conn.createStatement();
+        var rs = statement.executeQuery(sql);
+
+        while (rs.next()) {
+            var pid = rs.getLong("planetId");
+            var planetId = new PlanetId(pid);
+            var planetName = rs.getString("planetName");
+            var sid = new Sector.SectorId(rs.getLong("locationId"));
+            var location = Sector.getSector(sid);
+            var plid = new Player.PlayerId(rs.getLong("ownerId"));
+            var owner = Player.getPlayer(plid);
+            var planet = new Planet(planetId, planetName, location, owner);
+
             _inventory.put(planetId, planet);
-            _nextPlanetIdentifier = ident + 1;
+            _nextPlanetId = pid + 1;
+
+            location.setPlanet(planet);
         }
+
+        var msg = String.format("Loaded %d planets...\n", _inventory.size());
+        System.out.println(msg);
+        LOGGER.info(msg);
     }
 
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
-        var sql = String.format(INSERT_SQL,
-                                _identifier,
-                                _name,
-                                _sectorId.getClusterId(),
-                                _sectorId.getSectorNumber(),
-                                _ownerId);
+        var sql = String.format(INSERT_SQL, _planetId, _planetName, _location.getSectorId(), _owner.getPlayerId());
         var statement = conn.createStatement();
         statement.execute(sql);
+    }
+
+    public static class PlanetId {
+
+        private final long _value;
+
+        public PlanetId(
+            final long id
+        ) {
+            _value = id;
+        }
+
+        @Override
+        public boolean equals(
+            final Object obj
+        ) {
+            if (obj instanceof PlanetId id) {
+                return id._value == _value;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return (int)_value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(_value);
+        }
     }
 }

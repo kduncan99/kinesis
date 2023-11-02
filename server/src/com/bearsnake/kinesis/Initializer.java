@@ -98,7 +98,7 @@ public class Initializer {
             conn.setAutoCommit(true);
             var admin = Player.createPlayer("admin", "admin");
             admin.dbPersist(conn);
-            _databaseWrapper.deleteConnection(conn);
+            conn.close();
             System.out.println("Created admin");
         } catch (SQLException ex) {
             throw new DatabaseException(ex.getMessage());
@@ -106,9 +106,6 @@ public class Initializer {
 
         // Initialize initial cluster
         var cluster = Cluster.createStandardCluster(_databaseWrapper, "Sanctuary", 100, 10);
-        System.out.printf("Created %s cluster\n", cluster.getName());
-
-        // Done
-        _databaseWrapper.closeConnections();
+        System.out.printf("Created %s cluster\n", cluster.getClusterName());
     }
 }

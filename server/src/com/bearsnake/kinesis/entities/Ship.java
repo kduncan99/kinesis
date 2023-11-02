@@ -7,6 +7,7 @@ package com.bearsnake.kinesis.entities;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -14,51 +15,68 @@ import org.apache.logging.log4j.Logger;
 
 public class Ship {
 
+    public enum ShipType {
+        CRUISER("C"),
+        DRONE("D"),
+        FIGHTER("F"),
+        PROBE("P");
+
+        public final String _code;
+
+        ShipType(final String code) { _code = code; }
+
+        public static ShipType getShipType(
+            final String code
+        ) {
+            return Arrays.stream(values()).filter(st -> st._code.equals(code)).findFirst().orElse(null);
+        }
+    }
+
     private static final Logger LOGGER = LogManager.getLogger("Ship");
     private static final Map<ShipId, Ship> _inventory = new HashMap<>();
     private static int _nextShipIdentifier = 1;
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE ships ("
         + "  shipId integer PRIMARY KEY,"
+        + "  shipType text NOT NULL,"
         + "  shipName text NOT NULL,"
         + "  ownerId integer NOT NULL,"
-        + "  clusterId integer,"
-        + "  sectorNumber integer,"
+        + "  locationId integer NOT NULL,"
         + "  fuel real NOT NULL,"
         + "  shields real NOT NULL,"
         + "  cargoHolds integer NOT NULL,"
         + "  FOREIGN KEY (ownerId) REFERENCES players(playerId),"
-        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber)"
+        + "  FOREIGN KEY (locationId) REFERENCES sectors(sectorId)"
         + ") WITHOUT ROWID;";
 
     private static final String INSERT_SQL =
-        "INSERT INTO ships (shipId, shipName, ownerId, clusterId, sectorNumber, fuel, shields, cargoHolds)"
-            + " VALUES (%s, \"%s\", %s, %s, %s, %f, %f, %d);";
+        "INSERT INTO ships (shipId, shipType, shipName, ownerId, locationId, fuel, shields, cargoHolds)"
+            + " VALUES (%s, \"%s\", \"%s\", %s, %s, %f, %f, %d);";
 
-    private static final String QUERY_SQL =
-        "SELECT shipId, shipName, ownerId, fuel, shields, cargoHolds FROM ships ORDER BY shipId;";
-
-    private final ShipId _identifier;
-    private String _name;
-    private final PlayerId _ownerId;
-    private SectorId _sectorId;
+    private final ShipId _shipId;
+    private String _shipName;
+    private final ShipType _shipType;
+    private Player _owner;
+    private Sector _location;
     private float _fuel;
     private float _shields;
     private int _cargoHolds;
 
     private Ship(
-        final ShipId identifier,
-        final String name,
-        final PlayerId ownerId,
-        final SectorId sectorId,
+        final ShipId shipId,
+        final ShipType shipType,
+        final String shipName,
+        final Player owner,
+        final Sector location,
         final float fuel,
         final float shields,
         final int cargoHolds
     ) {
-        _identifier = identifier;
-        _name = name;
-        _ownerId = ownerId;
-        _sectorId = sectorId;
+        _shipId = shipId;
+        _shipType = shipType;
+        _shipName = shipName;
+        _owner = owner;
+        _location = location;
         _fuel = fuel;
         _shields = shields;
         _cargoHolds = cargoHolds;
@@ -66,38 +84,33 @@ public class Ship {
 
     public int getCargoHoldCount() { return _cargoHolds; }
     public float getFuelAmount() { return _fuel; }
-    public PlayerId getOwnerId() { return _ownerId; }
-    public SectorId getSectorId() { return _sectorId; }
+    public Sector getLocation() { return _location; }
+    public Player getOwner() { return _owner; }
     public float getShieldsLevel() { return _shields; }
-    public ShipId getShipId() { return _identifier; }
-    public String getShipName() { return _name; }
+    public static Ship getShip(final ShipId sid) { return _inventory.get(sid); }
+    public ShipId getShipId() { return _shipId; }
+    public String getShipName() { return _shipName; }
+    public ShipType getShipType() { return _shipType; }
     public void setCargoHoldCount(final int value) { _cargoHolds = value; }
     public void setFuelAmount(final float value) { _fuel = value; }
-    public void setSectorId(final SectorId value) { _sectorId = value; }
+    public void setLocation(final Sector value) { _location = value; }
+    public void setOwner(final Player value) { _owner = value; }
     public void setShieldsLevel(final float value) { _shields = value; }
-    public void setShipName(final String value) { _name = value; }
+    public void setShipName(final String value) { _shipName = value; }
 
     public static Ship createShip(
-        final String name,
-        final PlayerId ownerId,
+        final ShipType shipType,
+        final String shipName,
+        final Player owner,
+        final Sector location,
         final float fuelAmount,
         final float shieldsLevel,
         final int cargoHoldCount
     ) {
         var sid = new ShipId(_nextShipIdentifier++);
-        while (_inventory.containsKey(sid)) {
-            sid = sid.next();
-        }
-
-        var s = new Ship(sid, name, ownerId, null, fuelAmount, shieldsLevel, cargoHoldCount);
+        var s = new Ship(sid, shipType, shipName, owner, location, fuelAmount, shieldsLevel, cargoHoldCount);
         _inventory.put(sid, s);
         return s;
-    }
-
-    public static Ship getShip(
-        final ShipId sid
-    ) {
-        return _inventory.get(sid);
     }
 
     public static void dbCreateTable(
@@ -108,51 +121,85 @@ public class Ship {
         statement.execute(CREATE_TABLE_SQL);
     }
 
+    /**
+     * Loads all the Ship entities from the database. MUST be invoked AFTER loading Players and Sectors.
+     */
     public static void dbLoad(
         final Connection conn
     ) throws SQLException {
         LOGGER.trace("dbLoad()");
+
         _inventory.clear();
         var statement = conn.createStatement();
-        var rs = statement.executeQuery(QUERY_SQL);
+        var rs = statement.executeQuery("SELECT * FROM ships ORDER BY shipId;");
+
         while (rs.next()) {
             var ident = rs.getInt("shipId");
             var shipId = new ShipId(ident);
+            var shipType = ShipType.getShipType(rs.getString("shipType"));
             var shipName = rs.getString("shipName");
-
-            var clid = rs.getInt("clusterId");
-            var clidNull = rs.wasNull();
-            var snum = rs.getInt("sectorNumber");
-            var snumNull = rs.wasNull();
-            SectorId sectorId = null;
-            if (!clidNull && !snumNull) {
-                sectorId = new SectorId(new ClusterId(clid), snum);
-            }
-
-            var ownerId = new PlayerId(rs.getInt("ownerId"));
+            var owner = Player.getPlayer(new Player.PlayerId(rs.getLong("ownerId")));
+            var location = Sector.getSector(new Sector.SectorId(rs.getLong("locationId")));
+            Sector.SectorId sectorId = null;
             var fuel = rs.getFloat("fuel");
             var shields = rs.getFloat("shields");
             var cargoHolds = rs.getInt("cargoHolds");
 
-            var ship = new Ship(shipId, shipName, ownerId, sectorId, fuel, shields, cargoHolds);
+            var ship = new Ship(shipId, shipType, shipName, owner, location, fuel, shields, cargoHolds);
             _inventory.put(shipId, ship);
             _nextShipIdentifier = ident + 1;
         }
+
+        var msg = String.format("Loaded %d ships...\n", _inventory.size());
+        System.out.println(msg);
+        LOGGER.info(msg);
     }
 
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
         var sql = String.format(INSERT_SQL,
-                                _identifier,
-                                _name,
-                                _ownerId,
-                                _sectorId == null ? "null" : _sectorId.getClusterId(),
-                                _sectorId == null ? "null" : _sectorId.getSectorNumber().toString(),
+                                _shipId,
+                                _shipType._code,
+                                _shipName,
+                                _owner.getPlayerId(),
+                                _location.getSectorId(),
                                 _fuel,
                                 _shields,
                                 _cargoHolds);
         var statement = conn.createStatement();
         statement.execute(sql);
+    }
+
+    public static class ShipId {
+
+        private final long _value;
+
+        public ShipId(
+            final long id
+        ) {
+            _value = id;
+        }
+
+        @Override
+        public boolean equals(
+            final Object obj
+        ) {
+            if (obj instanceof ShipId id) {
+                return id._value == _value;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return (int)_value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(_value);
+        }
     }
 }
