@@ -7,6 +7,8 @@ package com.bearsnake.kinesis.entities;
 
 import com.bearsnake.kinesis.DatabaseWrapper;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
+
+import java.sql.Connection;
 import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +27,15 @@ import java.util.Set;
  * Represents a cluster of sectors
  */
 public class Cluster {
+
+    private static final String CREATE_TABLE_SQL =
+        "CREATE TABLE clusters ("
+            + "  clusterId integer PRIMARY KEY,"
+            + "  clusterName text NOT NULL"
+            + ") WITHOUT ROWID;";
+
+    private static final String INSERT_SQL =
+        "INSERT INTO clusters (clusterId, clusterName) VALUES (%s, '%s');";
 
     private static final int LONGEST_PATH_TO_HOME = 20;
     private static final Logger LOGGER = LogManager.getLogger("Cluster");
@@ -245,40 +256,17 @@ public class Cluster {
             conn.setAutoCommit(false);
             conn.beginRequest();
 
-            var sql = String.format("INSERT INTO clusters (clusterId, clusterName) VALUES (%s, '%s');", _clusterId, _name);
-            var statement = conn.createStatement();
-            statement.execute(sql);
+            dbPersist(conn);
 
             for (var sectorId : _sectors) {
                 var sector = Sector.getSector(sectorId);
-                sql = String.format("INSERT INTO sectors (clusterId, sectorNumber) VALUES (%s, %d);",
-                                    sectorId.getClusterId(),
-                                    sectorId.getSectorNumber());
-                statement = conn.createStatement();
-                statement.execute(sql);
+                sector.dbPersist(conn);
 
-                for (var linkedSectorId : sector.getLinks()) {
-                    sql = String.format("INSERT INTO sectorLinks (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
-                                            + " VALUES (%s, %d, %s, %d);",
-                                        sectorId.getClusterId(),
-                                        sectorId.getSectorNumber(),
-                                        linkedSectorId.getClusterId(),
-                                        linkedSectorId.getSectorNumber());
-                    statement = conn.createStatement();
-                    statement.execute(sql);
-                }
+                // TODO planet for sector
 
                 var portId = sector.getPortId();
                 if (portId != null) {
-                    var port = Port.getPort(portId);
-                    sql = String.format("INSERT INTO ports (portId, portName, clusterId, sectorNumber)"
-                                            + " VALUES (%s, '%s', %s, %d);",
-                                        portId,
-                                        port.getName(),
-                                        port.getSectorId().getClusterId(),
-                                        port.getSectorId().getSectorNumber());
-                    statement = conn.createStatement();
-                    statement.execute(sql);
+                    Port.getPort(portId).dbPersist(conn);
                 }
             }
 
@@ -318,5 +306,21 @@ public class Cluster {
             sb.append(" ").append(sector.getSectorNumber());
         }
         System.out.println(sb);
+    }
+
+    public static void dbCreateTable(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace(CREATE_TABLE_SQL);
+        var statement = conn.createStatement();
+        statement.execute(CREATE_TABLE_SQL);
+    }
+
+    public void dbPersist(
+        final Connection conn
+    ) throws SQLException {
+        var sql = String.format(INSERT_SQL, _clusterId, _name);
+        var statement = conn.createStatement();
+        statement.execute(sql);
     }
 }

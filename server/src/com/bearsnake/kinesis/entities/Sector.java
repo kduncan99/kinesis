@@ -8,6 +8,8 @@ package com.bearsnake.kinesis.entities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +20,34 @@ import java.util.stream.Collectors;
 
 public class Sector {
 
-    public static final Logger _logger = LogManager.getLogger("Sector");
+    private static final String CREATE_SECTORS_TABLE_SQL =
+        "CREATE TABLE sectors ("
+            + "  clusterId integer NOT NULL,"
+            + "  sectorNumber integer NOT NULL,"
+            // TODO foreign key ownerPlayerId *can* be NULL
+            + "  FOREIGN KEY (clusterId) REFERENCES clusters(clusterId),"
+            + "  PRIMARY KEY (clusterId, sectorNumber)"
+            + ") WITHOUT ROWID;";
+
+    private static final String CREATE_LINKS_TABLE_SQL =
+        "CREATE TABLE sectorLinks ("
+            + "  fromClusterId integer NOT NULL,"
+            + "  fromSectorNumber integer NOT NULL,"
+            + "  toClusterId integer NOT NULL,"
+            + "  toSectorNumber integer NOT NULL,"
+            + "  FOREIGN KEY (fromClusterId, fromSectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
+            + "  FOREIGN KEY (toClusterId, toSectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
+            + "  PRIMARY KEY (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
+            + ") WITHOUT ROWID;";
+
+    private static final String INSERT_SECTOR_SQL =
+        "INSERT INTO sectors (clusterId, sectorNumber) VALUES (%s, %d);";//TODO ownerPlayerId
+
+    private static final String INSERT_SECTOR_LINK_SQL =
+        "INSERT INTO sectorLinks (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
+            + " VALUES (%s, %d, %s, %d);";
+
+    private static final Logger LOGGER = LogManager.getLogger("Sector");
     private static final Map<SectorId, Sector> _inventory = new HashMap<>();
 
     private final SectorId _sectorId;
@@ -100,5 +129,35 @@ public class Sector {
         final Sector target
     ) {
         return _links.contains(target._sectorId);
+    }
+
+    public static void dbCreateTables(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace(CREATE_SECTORS_TABLE_SQL);
+        var statement = conn.createStatement();
+        statement.execute(CREATE_SECTORS_TABLE_SQL);
+
+        LOGGER.trace(CREATE_LINKS_TABLE_SQL);
+        statement = conn.createStatement();
+        statement.execute(CREATE_LINKS_TABLE_SQL);
+    }
+
+    public void dbPersist(
+        final Connection conn
+    ) throws SQLException {
+        var sql = String.format(INSERT_SECTOR_SQL, _sectorId.getClusterId(), _sectorId.getSectorNumber());// TODO owner player ID
+        var statement = conn.createStatement();
+        statement.execute(sql);
+
+        for (var linkSectorId : _links) {
+            sql = String.format(INSERT_SECTOR_LINK_SQL,
+                                _sectorId.getClusterId(),
+                                _sectorId.getSectorNumber(),
+                                linkSectorId.getClusterId(),
+                                linkSectorId.getSectorNumber());
+            statement = conn.createStatement();
+            statement.execute(sql);
+        }
     }
 }

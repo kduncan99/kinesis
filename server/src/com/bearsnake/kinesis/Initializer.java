@@ -6,7 +6,6 @@
 package com.bearsnake.kinesis;
 
 import com.bearsnake.kinesis.entities.Cluster;
-import com.bearsnake.kinesis.exceptions.DatabaseException;
 import com.bearsnake.kinesis.exceptions.KinesisException;
 import com.bearsnake.komando.ArgumentSwitch;
 import com.bearsnake.komando.CommandLineHandler;
@@ -15,16 +14,12 @@ import com.bearsnake.komando.exceptions.KomandoException;
 import com.bearsnake.komando.values.StringValue;
 import com.bearsnake.komando.values.ValueType;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import static com.bearsnake.kinesis.Kinesis.KINESIS_VERSION;
 
 public class Initializer {
 
-    private static CommandLineHandler _commandLineHandler;
-    private static Switch _databaseFileSwitch;
+    private static final CommandLineHandler _commandLineHandler;
+    private static final Switch _databaseFileSwitch;
 
     static {
         try {

@@ -8,6 +8,8 @@ package com.bearsnake.kinesis.entities;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +22,18 @@ public class Port {
     private static final Logger LOGGER = LogManager.getLogger("Port");
     private static final Map<PortId, Port> _inventory = new HashMap<>();
     private static final int _nextPortIdentifier = 1;
+
+    private static final String CREATE_TABLE_SQL = "CREATE TABLE ports ("
+        + "  portId integer PRIMARY KEY,"
+        + "  portName text NOT NULL,"
+        + "  clusterId integer NOT NULL,"
+        + "  sectorNumber integer NOT NULL,"
+        + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber)"
+        + ") WITHOUT ROWID;";
+
+    private static final String INSERT_SQL =
+        "INSERT INTO ports (portId, portName, clusterId, sectorNumber)"
+        + " VALUES (%s, '%s', %s, %d);";
 
     private final PortId _identifier;
     private final String _name;
@@ -66,5 +80,21 @@ public class Port {
         final PortId pid
     ) {
         return _inventory.get(pid);
+    }
+
+    public static void dbCreateTable(
+        final Connection conn
+    ) throws SQLException {
+        LOGGER.trace(CREATE_TABLE_SQL);
+        var statement = conn.createStatement();
+        statement.execute(CREATE_TABLE_SQL);
+    }
+
+    public void dbPersist(
+        final Connection conn
+    ) throws SQLException {
+        var sql = String.format(INSERT_SQL, _identifier, _name, _sectorId.getClusterId(), _sectorId.getSectorNumber());
+        var statement = conn.createStatement();
+        statement.execute(sql);
     }
 }

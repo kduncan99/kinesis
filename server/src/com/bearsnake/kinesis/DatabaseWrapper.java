@@ -5,6 +5,9 @@
 
 package com.bearsnake.kinesis;
 
+import com.bearsnake.kinesis.entities.Cluster;
+import com.bearsnake.kinesis.entities.Port;
+import com.bearsnake.kinesis.entities.Sector;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,47 +23,6 @@ import org.apache.logging.log4j.Logger;
 public class DatabaseWrapper {
 
     private static final Logger LOGGER = LogManager.getLogger("DatabaseWrapper");
-
-    private final static String CREATE_CLUSTER_TABLE =
-        "CREATE TABLE clusters ("
-            + "  clusterId integer PRIMARY KEY,"
-            + "  clusterName text NOT NULL"
-            + ") WITHOUT ROWID;";
-
-    private final static String CREATE_SECTOR_TABLE =
-        "CREATE TABLE sectors ("
-            + "  clusterId integer NOT NULL,"
-            + "  sectorNumber integer NOT NULL,"
-            + "  FOREIGN KEY (clusterId) REFERENCES clusters(clusterId),"
-            + "  PRIMARY KEY (clusterId, sectorNumber)"
-            + ") WITHOUT ROWID;";
-
-    private final static String CREATE_SECTOR_LINK_TABLE =
-        "CREATE TABLE sectorLinks ("
-            + "  fromClusterId integer NOT NULL,"
-            + "  fromSectorNumber integer NOT NULL,"
-            + "  toClusterId integer NOT NULL,"
-            + "  toSectorNumber integer NOT NULL,"
-            + "  FOREIGN KEY (fromClusterId, fromSectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
-            + "  FOREIGN KEY (toClusterId, toSectorNumber) REFERENCES sectors(clusterId, sectorNumber),"
-            + "  PRIMARY KEY (fromClusterId, fromSectorNumber, toClusterId, toSectorNumber)"
-            + ") WITHOUT ROWID;";
-
-    private final static String CREATE_PORT_TABLE =
-        "CREATE TABLE ports ("
-            + "  portId integer PRIMARY KEY,"
-            + "  portName text NOT NULL,"
-            + "  clusterId integer NOT NULL,"
-            + "  sectorNumber integer NOT NULL,"
-            + "  FOREIGN KEY (clusterId, sectorNumber) REFERENCES sectors(clusterId, sectorNumber)"
-            + ") WITHOUT ROWID;";
-
-    private final static String[] CREATE_STATEMENTS = {
-        CREATE_CLUSTER_TABLE,
-        CREATE_SECTOR_TABLE,
-        CREATE_SECTOR_LINK_TABLE,
-        CREATE_PORT_TABLE,
-    };
 
     private final String _path;
     private final String _url;
@@ -123,11 +85,11 @@ public class DatabaseWrapper {
             var conn = createConnection();
             conn.setAutoCommit(false);
             conn.beginRequest();
-            for (var sql : CREATE_STATEMENTS) {
-                LOGGER.trace(sql);
-                var statement = conn.createStatement();
-                statement.execute(sql);
-            }
+
+            Cluster.dbCreateTable(conn);
+            Sector.dbCreateTables(conn);
+            Port.dbCreateTable(conn);
+
             conn.commit();
             deleteConnection(conn);
         } catch (SQLException ex) {
