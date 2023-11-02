@@ -108,7 +108,7 @@ public class Planet {
             location.setPlanet(planet);
         }
 
-        var msg = String.format("Loaded %d planets...\n", _inventory.size());
+        var msg = String.format("Loaded %d planet(s)...", _inventory.size());
         System.out.println(msg);
         LOGGER.info(msg);
     }

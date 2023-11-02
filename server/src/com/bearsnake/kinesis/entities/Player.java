@@ -124,7 +124,7 @@ public class Player {
             _inventory.put(playerId, player);
         }
 
-        var msg = String.format("Loaded %d players...\n", _inventory.size());
+        var msg = String.format("Loaded %d player(s)...", _inventory.size());
         System.out.println(msg);
         LOGGER.info(msg);
     }

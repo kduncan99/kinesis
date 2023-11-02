@@ -16,14 +16,11 @@ import com.bearsnake.komando.exceptions.KomandoException;
 import com.bearsnake.komando.values.StringValue;
 import com.bearsnake.komando.values.ValueType;
 import java.sql.SQLException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import static com.bearsnake.kinesis.Kinesis.KINESIS_VERSION;
 
 public class Initializer {
 
-    private static final Logger LOGGER = LogManager.getLogger("Initializer");
     private static final CommandLineHandler _commandLineHandler;
     private static final Switch _databaseFileSwitch;
 
@@ -46,6 +43,8 @@ public class Initializer {
             throw new RuntimeException(e);
         }
     }
+
+    private final DatabaseWrapper _databaseWrapper;
 
     public static void main(
         final String[] args
@@ -77,13 +76,9 @@ public class Initializer {
         }
     }
 
-    private final DatabaseWrapper _databaseWrapper;
-    private final String _dbPath;
-
     private Initializer(
         final String dbPath
     ) {
-        _dbPath = dbPath;
         _databaseWrapper = new DatabaseWrapper(dbPath);
     }
 

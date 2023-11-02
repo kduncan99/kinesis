@@ -150,7 +150,7 @@ public class Ship {
             _nextShipIdentifier = ident + 1;
         }
 
-        var msg = String.format("Loaded %d ships...\n", _inventory.size());
+        var msg = String.format("Loaded %d ship(s)...", _inventory.size());
         System.out.println(msg);
         LOGGER.info(msg);
     }

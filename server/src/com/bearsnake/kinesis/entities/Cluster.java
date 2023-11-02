@@ -328,7 +328,7 @@ public class Cluster {
             _nextClusterId = cid + 1;
         }
 
-        var msg = String.format("Loaded %d clusters...\n", _inventory.size());
+        var msg = String.format("Loaded %d cluster(s)...", _inventory.size());
         System.out.println(msg);
         LOGGER.info(msg);
     }

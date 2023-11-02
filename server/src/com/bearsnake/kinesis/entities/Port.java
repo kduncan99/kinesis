@@ -120,7 +120,7 @@ public class Port {
             location.setPort(p);
         }
 
-        var msg = String.format("Loaded %d ports...\n", _inventory.size());
+        var msg = String.format("Loaded %d port(s)...", _inventory.size());
         System.out.println(msg);
         LOGGER.info(msg);
     }

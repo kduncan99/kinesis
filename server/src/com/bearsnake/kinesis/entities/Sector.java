@@ -189,7 +189,7 @@ public class Sector {
             linkCount++;
         }
 
-        var msg = String.format("Loaded %d sectors with %d links...\n", _inventory.size(), linkCount);
+        var msg = String.format("Loaded %d sector(s) with %d link(s)...", _inventory.size(), linkCount);
         System.out.println(msg);
         LOGGER.info(msg);
     }
@@ -200,6 +200,11 @@ public class Sector {
         var sql = String.format(INSERT_SECTOR_SQL, _sectorId, _cluster.getClusterId(), _sectorNumber);
         var statement = conn.createStatement();
         statement.execute(sql);
+
+        for (var link : _links) {
+            sql = String.format(INSERT_SECTOR_LINK_SQL, _sectorId, link.getSectorId());
+            statement.execute(sql);
+        }
     }
 
     public void dbUpdate(
