@@ -13,7 +13,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Ship {
+public abstract class Ship {
 
     public enum ShipType {
         CRUISER("C"),
@@ -62,7 +62,7 @@ public class Ship {
     private float _shields;
     private int _cargoHolds;
 
-    private Ship(
+    protected Ship(
         final ShipId shipId,
         final ShipType shipType,
         final String shipName,
@@ -82,6 +82,14 @@ public class Ship {
         _cargoHolds = cargoHolds;
     }
 
+    public static ShipId getNextShipId() {
+        synchronized (Ship.class) {
+            var result = new ShipId(_nextShipIdentifier);
+            _nextShipIdentifier++;
+            return result;
+        }
+    }
+
     public int getCargoHoldCount() { return _cargoHolds; }
     public float getFuelAmount() { return _fuel; }
     public Sector getLocation() { return _location; }
@@ -97,21 +105,6 @@ public class Ship {
     public void setOwner(final Player value) { _owner = value; }
     public void setShieldsLevel(final float value) { _shields = value; }
     public void setShipName(final String value) { _shipName = value; }
-
-    public static Ship createShip(
-        final ShipType shipType,
-        final String shipName,
-        final Player owner,
-        final Sector location,
-        final float fuelAmount,
-        final float shieldsLevel,
-        final int cargoHoldCount
-    ) {
-        var sid = new ShipId(_nextShipIdentifier++);
-        var s = new Ship(sid, shipType, shipName, owner, location, fuelAmount, shieldsLevel, cargoHoldCount);
-        _inventory.put(sid, s);
-        return s;
-    }
 
     public static void dbCreateTable(
         final Connection conn
@@ -136,18 +129,20 @@ public class Ship {
         while (rs.next()) {
             var ident = rs.getInt("shipId");
             var shipId = new ShipId(ident);
-            var shipType = ShipType.getShipType(rs.getString("shipType"));
+            var shipType = rs.getString("shipType");
             var shipName = rs.getString("shipName");
             var owner = Player.getPlayer(new Player.PlayerId(rs.getLong("ownerId")));
             var location = Sector.getSector(new Sector.SectorId(rs.getLong("locationId")));
-            Sector.SectorId sectorId = null;
             var fuel = rs.getFloat("fuel");
             var shields = rs.getFloat("shields");
             var cargoHolds = rs.getInt("cargoHolds");
 
-            var ship = new Ship(shipId, shipType, shipName, owner, location, fuel, shields, cargoHolds);
-            _inventory.put(shipId, ship);
-            _nextShipIdentifier = ident + 1;
+            switch (ShipType.getShipType(shipType)) {
+                case CRUISER -> new CruiserShip(shipId, shipName, owner, location, fuel, shields, cargoHolds);
+                case DRONE -> new DroneShip(shipId, owner, location, fuel, shields);
+                case FIGHTER -> new FighterShip(shipId, owner, location, fuel, shields);
+                case PROBE -> new ProbeShip(shipId, owner, location, fuel);
+            }
         }
 
         var msg = String.format("Loaded %d ship(s)...", _inventory.size());
