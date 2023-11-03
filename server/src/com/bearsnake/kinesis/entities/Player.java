@@ -7,12 +7,32 @@ package com.bearsnake.kinesis.entities;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Player {
+public abstract class Player {
+
+    public enum PlayerType {
+        ADMINISTRATOR("A"),
+        HUMAN("H");
+
+        public final String _code;
+
+        PlayerType(
+            final String code
+        ) {
+            _code = code;
+        }
+
+        static PlayerType getPlayerType(
+            final String code
+        ) {
+            return Arrays.stream(PlayerType.values()).filter(pt -> pt._code.equals(code)).findFirst().orElse(null);
+        }
+    }
 
     private static final Logger LOGGER = LogManager.getLogger("Player");
     private static final Map<PlayerId, Player> _inventory = new HashMap<>();
@@ -20,37 +40,52 @@ public class Player {
 
     private static final String CREATE_TABLE_SQL = "CREATE TABLE players ("
         + "  playerId integer PRIMARY KEY,"
+        + "  playerType string NOT NULL,"
         + "  username text NOT NULL,"
         + "  password text NOT NULL,"
         + "  gamename text NOT NULL"
         + ") WITHOUT ROWID;";
 
     private static final String INSERT_SQL =
-        "INSERT INTO players (playerId, username, password, gamename)"
-            + " VALUES (%s, '%s', '%s', '%s');";
+        "INSERT INTO players (playerId, playerType, username, password, gamename)"
+            + " VALUES (%s, \"%s\", \"%s\", \"%s\", \"%s\");";
 
     private final PlayerId _playerId;
+    private final PlayerType _playerType;
     private final String _username;
     private final String _password;
     private String _gameName;
 
-    private Player(
-        final PlayerId identifier,
+    protected Player(
+        final PlayerId playerId,
+        final PlayerType playerType,
         final String username,
         final String password,
         final String gameName
     ) {
-        _playerId = identifier;
+        _playerId = playerId;
+        _playerType = playerType;
         _username = username;
         _password = password;
         _gameName = gameName;
+
+        _inventory.put(playerId, this);
+    }
+
+    public static PlayerId getNextPlayerId() {
+        synchronized (Player.class) {
+            var result = new PlayerId(_nextPlayerIdentifier);
+            _nextPlayerIdentifier++;
+            return result;
+        }
     }
 
     public String getGameName() { return _gameName; }
     public PlayerId getPlayerId() { return _playerId; }
+    public PlayerType getPlayerType() { return _playerType; }
     public String getUsername() { return _username; }
     public String getPassword() { return _password; }
-    public boolean isAdmin() { return _playerId._value == 1; }
+    public boolean isAdministrator() { return _playerType == PlayerType.ADMINISTRATOR; }
     public void setGameName(final String value) { _gameName = _gameName; }
 
     @Override
@@ -58,16 +93,6 @@ public class Player {
         var sb = new StringBuilder();
         sb.append(_username).append(" (").append(_playerId).append(")");
         return sb.toString();
-    }
-
-    public static Player createPlayer(
-        final String username,
-        final String password
-    ) {
-        var plid = new PlayerId(_nextPlayerIdentifier++);
-        var p = new Player(plid, username, password, username);
-        _inventory.put(plid, p);
-        return p;
     }
 
     public static Player getPlayer(
@@ -79,23 +104,27 @@ public class Player {
     public static Player getPlayerByGameName(
         final String gameName
     ) {
-        for (var p : _inventory.values()) {
-            if (p.getGameName().equals(gameName)) {
-                return p;
+        synchronized (Player.class) {
+            for (var p : _inventory.values()) {
+                if (p.getGameName().equals(gameName)) {
+                    return p;
+                }
             }
+            return null;
         }
-        return null;
     }
 
     public static Player getPlayerByUserName(
         final String username
     ) {
-        for (var p : _inventory.values()) {
-            if (p.getUsername().equals(username)) {
-                return p;
+        synchronized (Player.class) {
+            for (var p : _inventory.values()) {
+                if (p.getUsername().equals(username)) {
+                    return p;
+                }
             }
+            return null;
         }
-        return null;
     }
 
     public static void dbCreateTable(
@@ -114,14 +143,16 @@ public class Player {
         var rs = statement.executeQuery(sql);
 
         while (rs.next()) {
-            var pid = rs.getLong("playerId");
-            var playerId = new PlayerId(pid);
+            var playerId = new PlayerId(rs.getLong("playerId"));
+            var playerType = rs.getString("playerType");
             var username = rs.getString("username");
             var password = rs.getString("password");
             var gameName = rs.getString("gameName");
 
-            var player = new Player(playerId, username, password, gameName);
-            _inventory.put(playerId, player);
+            switch (PlayerType.getPlayerType(playerType)) {
+                case ADMINISTRATOR -> new AdminPlayer(playerId, username, password, gameName);
+                case HUMAN -> new HumanPlayer(playerId, username, password, gameName);
+            }
         }
 
         var msg = String.format("Loaded %d player(s)...", _inventory.size());
@@ -132,7 +163,7 @@ public class Player {
     public void dbPersist(
         final Connection conn
     ) throws SQLException {
-        var sql = String.format(INSERT_SQL, _playerId, _username, _password, _gameName);
+        var sql = String.format(INSERT_SQL, _playerId, _playerType._code, _username, _password, _gameName);
         var statement = conn.createStatement();
         statement.execute(sql);
     }

@@ -80,6 +80,7 @@ public class Sector {
         final Cluster cluster,
         final Integer sectorNumber
     ) {
+        // cannot put a planet or port into a sector until it exists, so we always set planet and port to null
         SectorId sid = new SectorId(_nextSectorId++);
         var s = new Sector(sid, sectorNumber, cluster, Collections.emptySet(), null, null);
         _inventory.put(sid, s);

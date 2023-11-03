@@ -5,6 +5,7 @@
 
 package com.bearsnake.kinesis;
 
+import com.bearsnake.kinesis.entities.AdminPlayer;
 import com.bearsnake.kinesis.entities.Cluster;
 import com.bearsnake.kinesis.entities.Player;
 import com.bearsnake.kinesis.exceptions.DatabaseException;
@@ -91,7 +92,7 @@ public class Initializer {
         try {
             var conn = _databaseWrapper.createConnection();
             conn.setAutoCommit(true);
-            var admin = Player.createPlayer("admin", "admin");
+            var admin = AdminPlayer.createPlayer("admin", "admin", "The Administrator");
             admin.dbPersist(conn);
             conn.close();
             System.out.println("Created admin");
